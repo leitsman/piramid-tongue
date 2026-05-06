@@ -13,6 +13,27 @@ Reading practice with CEFR-appropriate texts and comprehension exercises.
 1. Read `configs/profile.yml`
 2. Get user's `level` (CEFR level)
 
+### Pre-Session Micro-Test
+
+**SKILL: Load `skills/_shared/micro-test.md` before starting.**
+
+1. Import MICRO_TESTS from `src/test_questions.py`:
+   ```python
+   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
+   ```
+2. Check if read skill has < 100 XP in `skills_progress` table:
+   ```sql
+   SELECT xp FROM skills_progress WHERE skill_name = 'read'
+   ```
+3. If (read_xp < 100) OR (user says "test me" / "ponme a prueba"):
+   a. Select 4 random questions from `MICRO_TESTS["read"][cefr_level]`
+   b. Present questions one by one, wait for answer (A/B/C/D)
+   c. Track score
+   d. If score == 4/4: offer 2 bonus questions from next level
+   e. Log result in today's daily log under "## Micro-Test: read"
+   f. If score < 3/4: recommend practicing prerequisites (e.g., /pt vocab)
+4. If read_xp >= 100 OR user says "skip": proceed to main session
+
 ### Step 2: Suggest Content by Level
 
 Based on user's level, suggest appropriate reading:

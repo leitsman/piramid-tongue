@@ -1,0 +1,122 @@
+# Platform Definitions for Piramid-Tongue
+# Define external learning platforms with their metrics and CEFR mappings
+# Adding a new platform only requires adding an entry here (no code changes)
+
+youtalk:
+  display_name: "YouTalk"
+  description: "Video/audio-based English learning platform with structured units"
+  levels:
+    - "Basic"
+    - "Intermediate"
+    - "Advanced"
+  units_per_level: 15
+  level_to_cefr:
+    Basic:
+      cefr: "A2"
+      confidence: 0.8
+    Intermediate:
+      cefr: "B1"
+      confidence: 0.7
+    Advanced:
+      cefr: "B2"
+      confidence: 0.6
+  metrics:
+    current_level:
+      type: "select"
+      options:
+        - "Basic"
+        - "Intermediate"
+        - "Advanced"
+      questions:
+        - "¿En qué nivel estás actualmente en YouTalk? (Basic/Intermediate/Advanced)"
+    current_unit:
+      type: "number"
+      min: 1
+      max: 15
+      questions:
+        - "¿En qué unidad estás ahora mismo? (1-15)"
+    total_units_completed:
+      type: "number"
+      min: 0
+      questions:
+        - "¿Cuántas unidades has completado en total?"
+    last_practice:
+      type: "date"
+      questions:
+        - "¿Cuándo fue tu última práctica en YouTalk? (YYYY-MM-DD o 'nunca')"
+    weekly_goal:
+      type: "number"
+      min: 1
+      questions:
+        - "¿Cuál es tu meta semanal de sesiones en YouTalk?"
+    sessions_this_week:
+      type: "number"
+      min: 0
+      questions:
+        - "¿Cuántas sesiones has hecho esta semana en YouTalk?"
+
+duolingo:
+  display_name: "Duolingo"
+  description: "Gamified language learning app"
+  levels: []  # Duolingo doesn't have clear level progression
+  level_to_cefr:
+    # Duolingo uses XP and leagues instead of levels
+    # Mapping is based on user research, not official
+    Bronze:
+      cefr: "A1"
+      confidence: 0.5
+    Silver:
+      cefr: "A2"
+      confidence: 0.5
+    Gold:
+      cefr: "A2"
+      confidence: 0.6
+    Sapphire:
+      cefr: "B1"
+      confidence: 0.6
+    Ruby:
+      cefr: "B1"
+      confidence: 0.7
+    Diamond:
+      cefr: "B2"
+      confidence: 0.7
+    Obsidian:
+      cefr: "C1"
+      confidence: 0.6
+  metrics:
+    streak:
+      type: "number"
+      min: 0
+      questions:
+        - "¿Cuál es tu racha actual en días?"
+    total_xp:
+      type: "number"
+      min: 0
+      questions:
+        - "¿Cuántos XP tienes en total? (opcional, presiona Enter para omitir)"
+    league:
+      type: "select"
+      options:
+        - "Bronze"
+        - "Silver"
+        - "Gold"
+        - "Sapphire"
+        - "Ruby"
+        - "Diamond"
+        - "Obsidian"
+      questions:
+        - "¿En qué liga estás actualmente?"
+    last_practice:
+      type: "date"
+      questions:
+        - "¿Cuándo fue tu última práctica en Duolingo? (YYYY-MM-DD o 'nunca')"
+    weekly_goal:
+      type: "number"
+      min: 1
+      questions:
+        - "¿Cuál es tu meta semanal de XP?"
+    xp_this_week:
+      type: "number"
+      min: 0
+      questions:
+        - "¿Cuántos XP has ganado esta semana?"

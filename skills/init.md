@@ -70,16 +70,87 @@ Once level is determined, ask:
 
 Wait for response.
 
-### Step 6: Ask about external platforms
+### Step 6: Platform Onboarding
 
+This step collects information about external learning platforms the user wants to track.
+
+**Step 6.1**: Ask about platforms
+
+Say:
+> "¿Qué plataformas de aprendizaje de inglés usas? Por ejemplo:
+> - **YouTalk** (plataforma de video/audio con unidades estructuradas)
+> - **Duolingo** (app gamificada)
+> - Otra que uses (Coursera, Busuu, etc.)"
+
+Wait for response. If user says "none" or "ninguna", skip to Step 6.4.
+
+**Step 6.2**: Parse platforms mentioned
+
+For each platform the user mentions:
+1. Check if it's in `configs/platforms.yaml` (known platforms: youtalk, duolingo)
+2. If known: use the platform's defined metrics
+3. If unknown: ask generic questions
+
+**Step 6.3**: Collect metrics for each platform
+
+For **YouTalk** (if mentioned):
+Ask each question and wait for response:
+> "¿En qué nivel estás actualmente en YouTalk? (Basic/Intermediate/Advanced)"
+> "¿En qué unidad estás ahora mismo? (1-15)"
+> "¿Cuántas unidades has completado en total?"
+> "¿Cuál es tu meta semanal de sesiones en YouTalk?"
+> "¿Cuántas sesiones has hecho esta semana en YouTalk?"
+
+For **Duolingo** (if mentioned):
+Ask each question and wait for response:
+> "¿Cuál es tu racha actual en días?"
+> "¿En qué liga estás actualmente? (Bronze/Silver/Gold/Sapphire/Ruby/Diamond/Obsidian)"
+> "¿Cuál es tu meta semanal de XP?"
+> "¿Cuántos XP has ganado esta semana?"
+
+For **Other platforms** (if mentioned):
 Ask:
-> "Do you want to track any external platforms for English learning? (e.g., Duolingo, YoTalkTV, Coursera)
-> 
-> If yes, tell me which platforms and what metrics you want to track (streak, level, topics, etc.)"
+> "¿Qué métricas quieres seguir para [platform]?"
+> "¿Cuál es tu nivel actual en [platform]?"
+> "¿Qué otras métricas relevantes tienes?"
+
+**Step 6.4**: Weekly goals
+
+After collecting platform data (or if user has no platforms), ask:
+> "¿Tienes alguna meta semanal de práctica en general? (ej: 5 sesiones, 30 minutos diarios)"
 
 Wait for response.
 
-If user provides platforms, store them in the profile.
+**Step 6.5**: Structure the data
+
+Build a platforms list like:
+```yaml
+platforms:
+  - name: "YouTalk"
+    enabled: true
+    metrics:
+      current_level: "Intermediate"
+      current_unit: 17
+      total_units_completed: 31
+      last_practice: null
+      weekly_goal: 5
+      sessions_this_week: 0
+    platform_level_to_cefr: "B1"
+    mapping_confidence: 0.7
+    user_override_cefr: null
+  - name: "Duolingo"
+    enabled: true
+    metrics:
+      streak: 378
+      total_xp: 0
+      league: "Sapphire"
+      last_practice: null
+      weekly_goal: 50
+      xp_this_week: 0
+    platform_level_to_cefr: null
+    mapping_confidence: 0.3
+    user_override_cefr: null
+```
 
 ### Step 7: Save to profile.yml
 
@@ -91,7 +162,7 @@ streak:
   current: 0
   longest: 0
   last_active: null
-platforms: [USER_PROVIDED_PLATFORMS or empty list]
+platforms: [STRUCTURED_PLATFORMS_DATA]
 roadmap: []
 ```
 
@@ -101,6 +172,6 @@ Say:
 > "Your profile is set up!
 > - Level: [DETECTED_LEVEL]
 > - Objectives: [OBJECTIVES]
-> - Platforms: [PLATFORMS if any]
+> - Platforms: [PLATFORM_SUMMARY]
 > 
 > Run `/pt new-day` to start your first daily session!"

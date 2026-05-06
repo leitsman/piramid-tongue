@@ -13,6 +13,27 @@ Speaking practice with read-aloud, shadowing, and tandem reminders.
 1. Read `configs/profile.yml`
 2. Get user's `level` (CEFR level)
 
+### Pre-Session Micro-Test
+
+**SKILL: Load `skills/_shared/micro-test.md` before starting.**
+
+1. Import MICRO_TESTS from `src/test_questions.py`:
+   ```python
+   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
+   ```
+2. Check if speak skill has < 100 XP in `skills_progress` table:
+   ```sql
+   SELECT xp FROM skills_progress WHERE skill_name = 'speak'
+   ```
+3. If (speak_xp < 100) OR (user says "test me" / "ponme a prueba"):
+   a. Select 4 random questions from `MICRO_TESTS["speak"][cefr_level]`
+   b. Present questions one by one, wait for answer (A/B/C/D)
+   c. Track score
+   d. If score == 4/4: offer 2 bonus questions from next level
+   e. Log result in today's daily log under "## Micro-Test: speak"
+   f. If score < 3/4: recommend practicing prerequisites (e.g., /pt vocab, /pt read, /pt listen)
+4. If speak_xp >= 100 OR user says "skip": proceed to main session
+
 ### Step 2: Ask User to Choose Mode
 
 Ask user which mode they want:

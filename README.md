@@ -1,66 +1,63 @@
 # Piramid-Tongue
 
-English learning CLI with pyramid methodology. Track your journey from vocabulary to fluency.
-
-> Spent months learning English without direction. So I built the system that always tells you **what to do next**.
+> Your personal English learning pyramid — always tells you **what to do next**.
 
 ## How It Works
 
+**AI-Executed Skills** — no Python processes, no CLI. The AI reads skill files and follows instructions directly.
+
 ```
-You run /pt init (level test)
-        │
-        ▼
-┌──────────────────┐
-│  Pyramid Engine  │  vocab → listen → read → write → speak
-└────────┬─────────┘
+You say: /pt init
+         │
+         ▼
+┌──────────────────────────────────┐
+│  AI reads skills/init.md        │
+│  AI executes level test          │
+│  AI saves to configs/profile.yml │
+└────────┬─────────────────────────┘
+         │
+         ▼
+┌──────────────────────────────────┐
+│  Pyramid Engine                  │
+│  vocab → read → listen           │
+│    → write → speak               │
+└────────┬─────────────────────────┘
          │
     ┌────┼────┐
     ▼    ▼    ▼
- Daily  CEFR  Vicios
- Log    Level  Detection
+ Daily  CEFR  Gap Detection
+ Log    Level  (Platform vs Skill)
 ```
 
 **Two flows:**
 - 🟢 **Ascent (learning)**: vocabulary → reading → listening → writing → speaking
-- 🔴 **Descent (perfecting)**: want to improve listening? Focus on listening + reading + vocabulary
+- 🔴 **Descent (perfecting)**: focus on weak skill + its dependencies
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Level Test** | Initial CEFR evaluation (A1-C2) per skill |
-| **Daily Tracker** | `/pt new-day` — start session, get recommendations based on progress |
-| **Vocabulary** | Spaced repetition (SM-2), technical vocab support |
+| **Level Test** | Adaptive CEFR evaluation (A1-C2) with SHA256-verified answers |
+| **Platform Tracking** | YouTalk, Duolingo, and more — metric-specific onboarding |
+| **Daily Tracker** | `/pt new-day` — self-report + gap detection + recommendations |
+| **Vocabulary** | Spaced repetition (SM-2), technical vocab, micro-tests |
 | **Listening** | Content by CEFR level, timed sessions, self-rating |
-| **Reading** | Texts by level, comprehension exercises |
-| **Writing** | 3 modes (transcription, creation, translation) + vicios detection |
-| **Speaking** | Read-aloud, shadowing, tandem reminders |
-| **Vicios Detection** | Detects repeated words, weak intensifiers, redundant phrases |
-| **External Platforms** | Track Duolingo, courses, any resource you use |
-| **Content Sources** | BBC Learning English, YouTube transcripts, public books, web scraping |
+| **Reading** | Texts by level, comprehension exercises, micro-tests |
+| **Writing** | Structural analysis + vicios detection + micro-tests |
+| **Speaking** | Read-aloud, shadowing, tandem reminders, micro-tests |
+| **Gap Detection** | Compares platform progress with actual skill levels |
+| **Self-Report** | Daily diagnostic question about difficulties |
+| **Micro-Tests** | 4 questions + 2 bonus before each skill session |
 | **Progress Pyramid** | Visual ASCII pyramid showing your level per skill |
 | **Streak Tracking** | Daily consistency counter |
 
 ## Quick Start
 
-### 1. Clone and install
+### 1. Clone and install dependencies
 
 ```bash
 git clone <your-repo>
 cd piramid-tongue
-
-# Create virtual environment
-python -m venv .venv
-
-# Activate it
-# Windows (cmd/PowerShell):
-.venv\Scripts\activate
-# Windows (Git Bash):
-source .venv/Scripts/activate
-# Linux/Mac:
-source .venv/bin/activate
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
@@ -70,61 +67,95 @@ pip install -r requirements.txt
 python -m pytest --tb=short -q
 ```
 
-### 3. Initialize your profile
+### 3. Start learning
 
-```bash
-python -m src.cli.main init
+Open this project in an AI assistant (OpenCode, Cursor, etc.) and say:
+
+```
+/pt init
 ```
 
-The level test evaluates your vocabulary, reading, listening, writing, and speaking. You can skip it if you already know your CEFR level.
+The AI will run the level test, set up your profile, ask about your learning platforms, and configure everything.
 
-### 4. Configure your profile
+**Both syntaxes work:** `/pt init` or `/pt-init`
 
-Edit `configs/profile.yml` with your details, objectives, and external platforms:
+### 4. Follow the recommendations
 
-```yaml
-user:
-  name: Your Name
-  objectives: ["technical", "conversational"]
-  
-platforms:
-  - name: Duolingo
-    metrics: { streak: 0, level: "" }
-  - name: YoTalkTV
-    metrics: { level: "", topics_completed: [] }
 ```
-
-### 5. Start learning
-
-```bash
-# Start your first day
-python -m src.cli.main new-day
-
-# Follow the recommendations
-python -m src.cli.main vocab
-python -m src.cli.main listen
-python -m src.cli.main read
-
-# Check your progress
-python -m src.cli.main progress
-python -m src.cli.main roadmap
+/pt new-day      # Start daily session + get recommendations
+/pt vocab        # Vocabulary (SM-2 review + new words)
+/pt read         # Reading practice
+/pt listen       # Listening practice
+/pt write        # Writing (structural analysis + vicios)
+/pt speak        # Speaking (read-aloud, shadowing)
+/pt progress     # Visual pyramid + stats + streak
+/pt roadmap      # Next steps with dependencies
+/pt vicios       # Analyze text for linguistic vices
+/pt practice     # Log external platform practice
 ```
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `pt init` | Level test + profile setup |
-| `pt new-day` | Start daily session + get recommendations |
-| `pt vocab` | Vocabulary (learn new words / SRS review) |
-| `pt listen` | Listening practice |
-| `pt read` | Reading practice |
-| `pt write` | Writing practice (transcription, creation, translation) |
-| `pt speak` | Speaking practice (read-aloud, shadowing, tandem) |
-| `pt practice` | Log external platform practice |
-| `pt progress` | Visual pyramid + stats + streak |
-| `pt roadmap` | Next steps with dependencies and time estimates |
-| `pt vicios` | Analyze text for linguistic vices |
+| Command | Aliases | Description |
+|---------|---------|-------------|
+| `/pt init` | `/pt-init` | Level test + profile + platform onboarding |
+| `/pt new-day` | `/pt-new-day` | Daily session + self-report + recommendations |
+| `/pt vocab` | `/pt-vocab` | Vocabulary (SM-2 review + micro-test) |
+| `/pt listen` | `/pt-listen` | Listening practice + micro-test |
+| `/pt read` | `/pt-read` | Reading practice + micro-test |
+| `/pt write` | `/pt-write` | Writing (structural analysis + vicios + micro-test) |
+| `/pt speak` | `/pt-speak` | Speaking practice + micro-test |
+| `/pt practice` | `/pt-practice` | Log external platform practice |
+| `/pt progress` | `/pt-progress` | Visual pyramid + stats + streak + gap detection |
+| `/pt roadmap` | `/pt-roadmap` | Next steps with dependencies |
+| `/pt vicios` | `/pt-vicios` | Analyze text for linguistic vices |
+
+## How the AI Executes Skills
+
+When you say `/pt <command>`:
+1. AI reads `skills/<command>.md` and `skills/_shared.md`
+2. AI reads your data from `configs/profile.yml` and the database
+3. AI asks you for input when required
+4. AI logs results to `logs/YYYY-MM-DD.md`
+5. AI updates the SQLite database
+6. AI shows you results and next steps
+
+**No Python processes are spawned. The AI IS the executor.**
+
+## Platform Tracking
+
+The system supports structured platform tracking with metric-specific onboarding:
+
+```yaml
+platforms:
+  - name: "YouTalk"
+    enabled: true
+    metrics:
+      current_level: "Intermediate"
+      current_unit: 17
+      total_units_completed: 31
+      weekly_goal: 5
+    platform_level_to_cefr: "B1"
+  - name: "Duolingo"
+    enabled: true
+    metrics:
+      streak: 378
+      league: "Sapphire"
+      weekly_goal: 50
+```
+
+New platforms can be added by editing `configs/platforms.yaml`.
+
+## Gap Detection
+
+The system detects gaps between your platform progress and actual skill levels:
+
+```
+⚠️ Gap Detected:
+Your YouTalk progress suggests B1, but your Writing is at A2.
+This means you're consuming content but not applying it enough.
+Focus on applying vocabulary in writing exercises.
+```
 
 ## Vicios Detection
 
@@ -137,31 +168,48 @@ The system detects common English writing vices:
 | "I think that" | Repeated 3+ times | Vary: "I believe", "In my opinion" |
 | "In order to" | "In order to improve" | "To improve" |
 | "Due to the fact" | "Due to the fact that..." | "Because..." |
-| Sentence starters | Always starting with "I" or "The" | Vary sentence structure |
-| Overused verbs | Too much "get", "make", "do" | Use more specific verbs |
-| Redundant phrases | "free gift", "end result" | Remove redundancy |
+| False friends | "actually" (for "currently") | Use "currently" or "in fact" |
+| Preposition errors | "depend of" | "depend on" |
 
-Patterns are configurable in `configs/vicios_patterns.yaml`. Add your own!
+Patterns are configurable in `configs/vicios_patterns.yaml`.
 
 ## Project Structure
 
 ```
 piramid-tongue/
 ├── configs/
-│   ├── profile.yml          # Your profile and platforms
-│   ├── vicios_patterns.yaml # Configurable vices detection
-│   └── config.yaml.example  # System configuration template
+│   ├── profile.yml           # Your profile, platforms, streak
+│   ├── platforms.yaml        # Platform definitions & metric schemas
+│   ├── vicios_patterns.yaml  # Configurable vices detection
+│   └── config.yaml.example   # System configuration template
+├── skills/                   # AI-executed skill files
+│   ├── _shared.md            # Shared pyramid context
+│   ├── _shared/
+│   │   └── micro-test.md     # Shared micro-test instructions
+│   ├── init.md               # Level test + profile setup
+│   ├── new-day.md            # Daily session + recommendations
+│   ├── vocab.md              # Vocabulary (SM-2 + micro-test)
+│   ├── listen.md             # Listening + micro-test
+│   ├── read.md               # Reading + micro-test
+│   ├── write.md              # Writing + structural analysis
+│   ├── speak.md              # Speaking + micro-test
+│   ├── practice.md           # External platform logging
+│   ├── progress.md           # ASCII pyramid + stats
+│   ├── roadmap.md            # Next steps
+│   └── vicios.md             # Vice pattern analysis
 ├── src/
-│   ├── cli/commands/        # CLI commands (Typer)
-│   ├── core/                # Pyramid engine, SM-2, CEFR detection
-│   ├── db/                  # SQLite schema and CRUD
-│   ├── scrapers/            # BBC, YouTube, Books, Web
-│   ├── logs/                # Daily markdown logs
-│   └── skills/              # Skill modules
-├── tests/                   # 102 passing tests
-├── logs/                    # Daily session logs (gitignored)
-├── data/                    # SQLite database (gitignored)
-└── requirements.txt
+│   ├── platforms/            # Platform registry & gap detection
+│   ├── analysis/             # Structural writing analysis
+│   ├── core/                 # Pyramid engine, SM-2, CEFR
+│   ├── db/                   # SQLite schema and CRUD
+│   ├── scrapers/             # BBC, YouTube, Books, Web
+│   ├── logs/                 # Daily markdown logs
+│   └── test_questions.py     # Level test + micro-test question bank
+├── tests/                    # Test suite
+├── logs/                     # Daily session logs (gitignored)
+├── data/                     # SQLite database (gitignored)
+├── configs/                  # User config files
+└── .sdd/                     # SDD artifacts (gitignored)
 ```
 
 ## Persistence
@@ -170,15 +218,15 @@ piramid-tongue/
 |-------|--------|---------|
 | **Logs** | Markdown (`logs/YYYY-MM-DD.md`) | Daily session records, human-readable |
 | **Stats** | SQLite (`data/progress.db`) | Vocabulary, skills, vicios, sessions — queryable |
-| **Config** | YAML | Profile, platforms, vicios patterns |
+| **Config** | YAML | Profile, platforms, vicios patterns, platform definitions |
 
 ## Tech Stack
 
-- **CLI**: Python + Typer
+- **Python**: Core modules (pyramid engine, SM-2, structural analysis, gap detection)
 - **Persistence**: SQLite + Markdown
 - **Scraping**: BeautifulSoup4 + requests + yt-dlp
 - **Testing**: pytest
-- **Algorithms**: SM-2 (spaced repetition), CEFR detection, vicios frequency analysis
+- **Algorithms**: SM-2 (spaced repetition), CEFR detection, structural analysis, gap detection
 
 ## License
 

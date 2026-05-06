@@ -8,8 +8,29 @@ streak:
   current: 0
   longest: 0
   last_active: null
-platforms: []  # - name: Duolingo
-               #   metrics: { streak: 0, level: "" }
-               # - name: YoTalkTV
-               #   metrics: { level: "", topics_completed: [] }
-roadmap: []  # Generated after init
+platforms:
+  - name: "YouTalk"
+    enabled: true
+    metrics:
+      current_level: "Intermediate"
+      current_unit: 17
+      total_units_completed: 31
+      last_practice: null
+      weekly_goal: 5
+      sessions_this_week: 0
+    platform_level_to_cefr: "B1"
+    mapping_confidence: 0.7
+    user_override_cefr: null
+  - name: "Duolingo"
+    enabled: true
+    metrics:
+      streak: 378
+      total_xp: 0
+      league: ""
+      last_practice: null
+      weekly_goal: 50
+      xp_this_week: 0
+    platform_level_to_cefr: null
+    mapping_confidence: 0.3
+    user_override_cefr: null
+roadmap: []

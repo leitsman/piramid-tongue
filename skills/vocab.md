@@ -13,6 +13,27 @@ Vocabulary practice with spaced repetition (SM-2) and new word learning.
 1. Read `configs/profile.yml`
 2. Get user's `level` (CEFR level: A1, A2, B1, B2, C1, C2)
 
+### Pre-Session Micro-Test
+
+**SKILL: Load `skills/_shared/micro-test.md` before starting.**
+
+1. Import MICRO_TESTS from `src/test_questions.py`:
+   ```python
+   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
+   ```
+2. Check if vocab skill has < 100 XP in `skills_progress` table:
+   ```sql
+   SELECT xp FROM skills_progress WHERE skill_name = 'vocab'
+   ```
+3. If (vocab_xp < 100) OR (user says "test me" / "ponme a prueba"):
+   a. Select 4 random questions from `MICRO_TESTS["vocab"][cefr_level]`
+   b. Present questions one by one, wait for answer (A/B/C/D)
+   c. Track score
+   d. If score == 4/4: offer 2 bonus questions from next level
+   e. Log result in today's daily log under "## Micro-Test: vocab"
+   f. If score < 3/4: recommend practicing prerequisites (e.g., /pt vocab basics)
+4. If vocab_xp >= 100 OR user says "skip": proceed to main session
+
 ### Step 2: Check for Words Due for Review (SM-2 Algorithm)
 
 1. Read `src/core/spaced_repetition.py` for SM-2 algorithm
