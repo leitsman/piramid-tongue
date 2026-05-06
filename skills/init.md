@@ -70,7 +70,18 @@ Once level is determined, ask:
 
 Wait for response.
 
-### Step 6: Save to profile.yml
+### Step 6: Ask about external platforms
+
+Ask:
+> "Do you want to track any external platforms for English learning? (e.g., Duolingo, YoTalkTV, Coursera)
+> 
+> If yes, tell me which platforms and what metrics you want to track (streak, level, topics, etc.)"
+
+Wait for response.
+
+If user provides platforms, store them in the profile.
+
+### Step 7: Save to profile.yml
 
 Write to `configs/profile.yml`:
 ```yaml
@@ -80,15 +91,16 @@ streak:
   current: 0
   longest: 0
   last_active: null
-platforms: []
+platforms: [USER_PROVIDED_PLATFORMS or empty list]
 roadmap: []
 ```
 
-### Step 7: Confirm
+### Step 8: Confirm
 
 Say:
 > "Your profile is set up!
 > - Level: [DETECTED_LEVEL]
 > - Objectives: [OBJECTIVES]
+> - Platforms: [PLATFORMS if any]
 > 
 > Run `/pt new-day` to start your first daily session!"
