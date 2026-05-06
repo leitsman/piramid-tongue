@@ -89,10 +89,8 @@ user:
   
 platforms:
   - name: Duolingo
-    url: https://duolingo.com
     metrics: { streak: 0, level: "" }
   - name: YoTalkTV
-    url: https://youtube.com/youtalktv
     metrics: { level: "", topics_completed: [] }
 ```
 

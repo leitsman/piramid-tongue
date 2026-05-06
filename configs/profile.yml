@@ -8,7 +8,7 @@ streak:
   longest: 0
   last_active: null
 platforms: []  # - name: Duolingo
-               #   url: https://duolingo.com
-               #   streak: 0
-               #   metrics: {xp: 0, level: 1}
+               #   metrics: { streak: 0, level: "" }
+               # - name: YoTalkTV
+               #   metrics: { level: "", topics_completed: [] }
 roadmap: []  # Generated after init
