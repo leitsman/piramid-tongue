@@ -12,7 +12,7 @@ Built by [santifer](https://santifer.io) after months of learning English withou
 
 ## Quick Start
 
-1. **First time?** Run `/pt init` or `python -m src.cli.main init`
+1. **First time?** Run `/pt init` — I will execute the level test directly
 2. **Start daily session:** `/pt new-day` or `/pt-new-day`
 3. **Practice a skill:** `/pt vocab`, `/pt listen`, `/pt read`, `/pt write`, `/pt speak`
 
@@ -22,7 +22,7 @@ Built by [santifer](https://santifer.io) after months of learning English withou
 
 | Command | Skill File | Description |
 |---------|------------|-------------|
-| `/pt init` | — | Level test + profile setup |
+| `/pt init` | `skills/init.md` | Level test + profile setup |
 | `/pt new-day` | `skills/new-day.md` | Start daily session + recommendations |
 | `/pt vocab` | `skills/vocab.md` | Vocabulary (SRS review + new words) |
 | `/pt listen` | `skills/listen.md` | Listening practice with self-rating |
@@ -53,6 +53,17 @@ Built by [santifer](https://santifer.io) after months of learning English withou
 
 ---
 
+## How Commands Work (CRITICAL)
+
+When the user says `/pt <command>`, I execute it **DIRECTLY**:
+
+1. **I read** the corresponding `skills/<command>.md` file
+2. **I follow** the instructions IN that file
+3. **I update** `configs/profile.yml` and `data/progress.db` as needed
+4. **I NEVER spawn a Python process** or run `python -m src.cli.main`
+
+The AI IS the executor. The `skills/*.md` files contain instructions that I (the AI) carry out.
+
 ## AI Execution Model
 
 AI agents read `skills/*.md` files to execute commands. When user says `/pt <command>`:
@@ -76,12 +87,11 @@ AI agents read `skills/*.md` files to execute commands. When user says `/pt <com
 **If profile is missing, enter onboarding mode:**
 
 #### Step 1: Initialize Profile
-Direct user to run:
-```bash
-python -m src.cli.main init
-```
-
-This runs the internal level test (hidden questions with SHA256 hashed answers) to determine CEFR level.
+I execute the level test **directly** following `skills/init.md`:
+1. Ask user for their estimated CEFR level (A1-C2)
+2. Offer an optional validation test
+3. If test accepted: ask questions per level (5-7), verify answers via SHA256 hash
+4. Save detected level to `configs/profile.yml`
 
 #### Step 2: Configure Platforms
 Edit `configs/profile.yml` if user wants to track external platforms:

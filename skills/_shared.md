@@ -16,7 +16,7 @@
 | `/pt progress` or `/pt-progress` | `skills/progress.md` | `progress` |
 | `/pt roadmap` or `/pt-roadmap` | `skills/roadmap.md` | `roadmap` |
 | `/pt vicios` or `/pt-vicios` | `skills/vicios.md` | `vicios` |
-| `/pt init` or `/pt-init` | Run `python -m src.cli.main init` | `init` |
+| `/pt init` or `/pt-init` | `skills/init.md` | `init` |
 
 ## Data Contract (CRITICAL)
 
@@ -113,8 +113,8 @@ Patterns are configured in `configs/vicios_patterns.yaml`.
 When `configs/profile.yml` has `level: null` or doesn't exist:
 
 1. Tell user: "Let's set up your profile first!"
-2. Direct user to run: `python -m src.cli.main init`
-3. The init command runs the adaptive level test
+2. Execute `/pt init` by reading `skills/init.md` and following the instructions
+3. The init skill runs the adaptive level test directly
 4. After init, user should run `/pt new-day`
 
 ## Internal Test for Init
