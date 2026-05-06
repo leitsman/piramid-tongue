@@ -1,0 +1,14 @@
+# Piramid-Tongue Example Configuration
+# Copy to ~/.config/piramid-tongue/config.yaml and customize
+
+# Database path (default: ~/.piramid-tongue/piramid-tongue.db)
+db_path: "~/.piramid-tongue/piramid-tongue.db"
+
+# Logs directory (default: ~/piramid-tongue/logs)
+logs_dir: "~/piramid-tongue/logs"
+
+# Content cache TTL in hours
+content_cache_ttl_hours: 24
+
+# Rate limit delay between scraper requests (seconds)
+rate_limit_delay_seconds: 2

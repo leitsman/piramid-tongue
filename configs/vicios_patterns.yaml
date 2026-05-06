@@ -1,0 +1,49 @@
+"""Vicios detection patterns configuration."""
+
+- pattern: "\\bthe\\b"
+  flag: g
+  description: "Overuse of definite article 'the'"
+  threshold: 0.12
+  suggestion: "Try using 'a/an' or omitting the article when appropriate."
+
+- pattern: "\\bvery\\s+\\w+"
+  flag: g
+  description: "'very + adjective' intensifier"
+  threshold: 0.05
+  suggestion: "Replace with stronger adjectives (e.g., 'very good' -> 'excellent')."
+
+- pattern: "\\bactually\\b"
+  flag: g
+  description: "Filler word 'actually' (false friend from Spanish 'actualmente')"
+  threshold: 0.03
+  suggestion: "Use 'currently', 'in fact', or 'really' depending on context."
+
+- pattern: "\\bthing\\b"
+  flag: g
+  description: "Vague word 'thing'"
+  threshold: 0.08
+  suggestion: "Be more specific — replace with the actual noun."
+
+- pattern: "\\bgood\\b"
+  flag: g
+  description: "Overuse of generic 'good'"
+  threshold: 0.06
+  suggestion: "Use more precise adjectives: great, excellent, beneficial, effective."
+
+- pattern: "\\bvery\\s+(good|bad|big|small|important|nice)"
+  flag: g
+  description: "'very + common adjective' — weak intensifier"
+  threshold: 0.03
+  suggestion: "Replace with a stronger single word."
+
+- pattern: "\\bin\\s+order\\s+to\\b"
+  flag: g
+  description: "Wordy phrase 'in order to'"
+  threshold: 0.02
+  suggestion: "Simplify to just 'to'."
+
+- pattern: "\\b(a|an)\\s+lot\\s+of\\b"
+  flag: g
+  description: "Informal 'a lot of'"
+  threshold: 0.05
+  suggestion: "Use 'many', 'much', 'numerous', or 'a significant amount of'."
