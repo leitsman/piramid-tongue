@@ -14,10 +14,34 @@ Usage:
     pt vicios        Analyze writing for linguistic vices
 """
 
-from pathlib import Path
+import re
 import sys
 
-import typer
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
+
+    def _strip_emoji(text: str) -> str:
+        emoji_pattern = re.compile(
+            "["
+            "\U0001F600-\U0001F64F"
+            "\U0001F300-\U0001F5FF"
+            "\U0001F680-\U0001F6FF"
+            "\U0001F1E0-\U0001F1FF"
+            "\U00002702-\U000027B0"
+            "\U000024C2-\U0001F251"
+            "]+",
+            flags=re.UNICODE,
+        )
+        return emoji_pattern.sub(r"", text)
+
+    import typer
+    _original_echo = typer.echo
+    typer.echo = lambda text, *args, **kwargs: _original_echo(_strip_emoji(str(text)), *args, **kwargs)
+else:
+    import typer
+
+from pathlib import Path
 
 from src.core.config import Config
 from src.db import DB

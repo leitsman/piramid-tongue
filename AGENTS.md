@@ -8,57 +8,63 @@ Built by [santifer](https://santifer.io) after months of learning English withou
 
 **It will work out of the box, but it's designed to be made yours.** The pyramid adapts to your level, objectives, and platforms. You (AI Agent) can edit user files directly.
 
+---
+
+## Quick Start
+
+1. **First time?** Run `/pt init` or `python -m src.cli.main init`
+2. **Start daily session:** `/pt new-day` or `/pt-new-day`
+3. **Practice a skill:** `/pt vocab`, `/pt listen`, `/pt read`, `/pt write`, `/pt speak`
+
+---
+
+## Command Reference
+
+| Command | Skill File | Description |
+|---------|------------|-------------|
+| `/pt init` | — | Level test + profile setup |
+| `/pt new-day` | `skills/new-day.md` | Start daily session + recommendations |
+| `/pt vocab` | `skills/vocab.md` | Vocabulary (SRS review + new words) |
+| `/pt listen` | `skills/listen.md` | Listening practice with self-rating |
+| `/pt read` | `skills/read.md` | Reading comprehension exercises |
+| `/pt write` | `skills/write.md` | Writing (transcription, creation, translation) |
+| `/pt speak` | `skills/speak.md` | Speaking (read-aloud, shadowing, tandem) |
+| `/pt practice` | `skills/practice.md` | Log external platform practice |
+| `/pt progress` | `skills/progress.md` | ASCII pyramid + stats + streak |
+| `/pt roadmap` | `skills/roadmap.md` | Next steps with dependencies + time |
+| `/pt vicios` | `skills/vicios.md` | Analyze text for linguistic vices |
+
+**Both syntaxes work:** `/pt new-day` (slash) and `/pt-new-day` (hyphen)
+
+---
+
 ## Data Contract (CRITICAL)
 
-**User Layer (NEVER auto-updated, personalization goes HERE):**
+**User Layer (NEVER auto-updated by AI unless explicitly requested):**
 - `configs/profile.yml` — identity, level, objectives, streak, platforms
 - `configs/vicios_patterns.yaml` — custom vice patterns
-- `data/` — SQLite database (vocabulary, skills, sessions)
-- `logs/` — daily markdown session logs
+- `data/progress.db` — SQLite database (vocabulary, skills, sessions)
+- `logs/YYYY-MM-DD.md` — daily markdown session logs
 
-**System Layer (auto-updatable, DON'T put user data here):**
+**System Layer (auto-updatable):**
 - `src/` — all source code
+- `skills/` — AI skill execution files
 - `configs/config.yaml.example` — system configuration template
-- `AGENTS.md`, `README.md`, `DESIGN.md`
-- `tests/` — test suite
 
-## What is piramid-tongue
+---
 
-English learning CLI with pyramid methodology. Track your journey from vocabulary to fluency.
+## AI Execution Model
 
-```
-You run /pt init (level test)
-        │
-        ▼
-┌──────────────────┐
-│  Pyramid Engine  │  vocab → listen → read → write → speak
-└────────┬─────────┘
-         │
-    ┌────┼────┐
-    ▼    ▼    ▼
- Daily  CEFR  Vicios
- Log    Level  Detection
-```
+AI agents read `skills/*.md` files to execute commands. When user says `/pt <command>`:
 
-**Two flows:**
-- 🟢 **Ascent (learning)**: vocabulary → reading → listening → writing → speaking
-- 🔴 **Descent (perfecting)**: want to improve listening? Focus on listening + reading + vocabulary
+1. AI reads `skills/<command>.md` and `skills/_shared.md`
+2. AI reads user data from `configs/profile.yml` and database
+3. AI asks user for input when required
+4. AI logs results to `logs/YYYY-MM-DD.md`
+5. AI updates SQLite database
+6. AI shows user results and next steps
 
-## Commands Table
-
-| Command | Description |
-|---------|-------------|
-| `/pt init` | Level test + profile setup |
-| `/pt new-day` | Start daily session + get recommendations |
-| `/pt vocab` | Vocabulary (learn new words / SRS review) |
-| `/pt listen` | Listening practice |
-| `/pt read` | Reading practice |
-| `/pt write` | Writing practice (transcription, creation, translation) |
-| `/pt speak` | Speaking practice (read-aloud, shadowing, tandem) |
-| `/pt practice` | Log external platform practice |
-| `/pt progress` | Visual pyramid + stats + streak |
-| `/pt roadmap` | Next steps with dependencies and time estimates |
-| `/pt vicios` | Analyze text for linguistic vices |
+---
 
 ## First Run Onboarding
 
@@ -70,15 +76,15 @@ You run /pt init (level test)
 **If profile is missing, enter onboarding mode:**
 
 #### Step 1: Initialize Profile
-Ask the user to run:
+Direct user to run:
 ```bash
 python -m src.cli.main init
 ```
 
-This runs the CEFR level test (A1-C2) for vocabulary, reading, listening, writing, and speaking.
+This runs the internal level test (hidden questions with SHA256 hashed answers) to determine CEFR level.
 
 #### Step 2: Configure Platforms
-If the user uses external platforms (Duolingo, YoTalkTV, etc.), edit `configs/profile.yml`:
+Edit `configs/profile.yml` if user wants to track external platforms:
 
 ```yaml
 platforms:
@@ -98,6 +104,8 @@ Update `configs/profile.yml` with `objectives: [technical, conversational]` or s
 
 #### Step 4: Ready
 > "You're all set! Run `/pt new-day` to start your daily session and get recommendations based on your pyramid progress."
+
+---
 
 ## Pyramid Methodology
 
@@ -130,20 +138,44 @@ When starting or at a new level: follow vocab → read → listen → write → 
 When you want to improve a skill: focus on that skill + its dependencies
 - Improve listening? → Practice listening + reading + vocabulary
 
-## Skill Modes
+### Dependencies
 
-| If the user... | Mode |
-|----------------|------|
-| Starts a new day | `new-day` — daily recommendations |
-| Adds vocabulary | `vocab` — SRS review, new words |
-| Practices listening | `listen` — content suggestions, self-rating |
-| Reads texts | `read` — level detection, comprehension |
-| Writes text | `write` — vicios analysis, correction |
-| Practices speaking | `speak` — read-aloud, shadowing |
-| Logs platform practice | `practice` — external platform sync |
-| Checks progress | `progress` — visual pyramid + streak |
-| Plans next steps | `roadmap` — dependencies + estimates |
-| Analyzes text | `vicios` — linguistic vice detection |
+```
+vocab: (unlocked)
+read: requires vocab
+listen: requires read
+write: requires listen
+speak: requires write
+```
+
+Skills require 100 XP in prerequisites before unlocking.
+
+---
+
+## CEFR Levels
+
+- **A1** — Beginner (can use basic phrases)
+- **A2** — Elementary (can handle simple transactions)
+- **B1** — Intermediate (can deal with most travel situations)
+- **B2** — Upper Intermediate (can interact with native speakers)
+- **C1** — Advanced (can express ideas fluently)
+- **C2** — Proficient (can match native speakers)
+
+---
+
+## Internal Level Test
+
+The init command uses `src/test_questions.py` which contains:
+- Questions per CEFR level (5-7 each)
+- Answers stored as SHA256 hashes
+- A1: basic be, articles, simple present
+- A2: past tense, conditionals
+- B1: past perfect, wish
+- B2: inversion, gerunds
+- C1: subjunctive, advanced inversion
+- C2: if user passes C1, they reach C2
+
+---
 
 ## Vicios Detection
 
@@ -156,6 +188,7 @@ The system detects common English writing vices:
 | "I think that" | Repeated 3+ times | Vary: "I believe", "In my opinion" |
 | "In order to" | "In order to improve" | "To improve" |
 | "Due to the fact" | "Due to the fact that..." | "Because..." |
+| "a lot of" | "a lot of people" | "many", "numerous" |
 
 Patterns are configurable in `configs/vicios_patterns.yaml`.
 
