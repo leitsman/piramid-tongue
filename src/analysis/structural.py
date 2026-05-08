@@ -366,3 +366,30 @@ class StructuralAnalyzer:
         issue_descriptions = [f"{t} ({c})" for t, c in most_common]
         
         return f"Score: {score:.0f}/100. Main issues: {', '.join(issue_descriptions)}"
+
+
+# Maps StructuralAnalyzer issue types to adaptive practice categories
+ISSUE_TO_CATEGORY = {
+    "article_overuse": "article_usage",
+    "article_missing": "article_usage", 
+    "run_on_sentence": "sentence_structure",
+    "sentence_fragment": "sentence_structure",
+    "spanish_interference_false_friend": "false_friends",
+    "verb_tense_inconsistency": "verb_tense",
+    "preposition_error": "preposition_by",
+    "expletive_it_misuse": "expletive_it",
+    "modal_verb_error": "modal_might",
+}
+
+def get_practice_recommendations(analysis_result: AnalysisResult) -> list:
+    """Convert structural analysis issues to practice recommendations.
+    Returns list of category names sorted by severity.
+    """
+    seen = set()
+    recs = []
+    for issue in analysis_result.issues:
+        cat = ISSUE_TO_CATEGORY.get(issue.type)
+        if cat and cat not in seen:
+            seen.add(cat)
+            recs.append(cat)
+    return recs

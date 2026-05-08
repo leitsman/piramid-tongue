@@ -64,8 +64,31 @@ After user provides their text (creation or translation):
    - Main areas to improve: [summary]
    ```
 4. If issues found, log in daily log under `## Structural Analysis`
+5. Ask user what to do next:
+   ```
+   Options after analysis:
+   1. Continue to vicios detection
+   2. Get detailed explanations of issues
+   3. Práctica adaptativa mixta — basada en tus debilidades detectadas
+   ```
+6. If user selects option 3, follow **Step 6: Adaptive Mixed Practice**
 
-### Step 6: Vicios Detection
+### Step 6: Adaptive Mixed Practice (Option 3)
+
+If user selects option 3:
+
+1. **SKILL: Load `skills/_shared/adaptive-practice.md` before starting.**
+2. Query `weaknesses` table for active categories (from DB)
+3. If weaknesses found:
+   - Follow adaptive-practice.md flow (mixed exercises)
+   - Update weaknesses table after completion
+4. If no weaknesses:
+   - "No weaknesses detected. Try the mixed exercises from these common areas:"
+   - Generate a mixed set from MIXED_EXERCISE_BANKS (expletive_it, modal_might, preposition_by)
+5. Log results in daily log under "## Adaptive Practice"
+6. After practice, proceed to Step 7 (Vicios Detection)
+
+### Step 7: Vicios Detection
 
 1. Read `configs/vicios_patterns.yaml`
 2. Analyze user's written text for patterns:
@@ -77,7 +100,7 @@ After user provides their text (creation or translation):
    - Vague "thing" (threshold: 0.08)
 3. Report detected vicios with suggestions
 
-### Step 7: Log Session and Update
+### Step 8: Log Session and Update
 
 1. Use `src/logs/writer.py` → LogWriter
 2. Append to today's log under "## Writing Exercise":

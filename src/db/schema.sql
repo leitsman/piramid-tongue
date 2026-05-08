@@ -82,3 +82,30 @@ CREATE TABLE IF NOT EXISTS sessions (
     self_rating INTEGER CHECK(self_rating BETWEEN 1 AND 5),
     notes TEXT
 );
+
+-- Weaknesses tracking for adaptive practice
+CREATE TABLE IF NOT EXISTS weaknesses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    description TEXT,
+    detected_date TEXT NOT NULL DEFAULT (datetime('now')),
+    last_practiced TEXT,
+    fail_count INTEGER DEFAULT 0,
+    pass_count INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'mastered', 'ignored')),
+    source TEXT DEFAULT 'structural_analysis' CHECK(source IN ('micro_test', 'structural_analysis', 'user_reported', 'transcription'))
+);
+
+-- Platform-specific progress tracking (YouTalk, Duolingo, etc.)
+CREATE TABLE IF NOT EXISTS platform_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    platform_name TEXT NOT NULL,
+    level TEXT NOT NULL,
+    unit_number INTEGER NOT NULL,
+    unit_type TEXT NOT NULL CHECK(unit_type IN ('grammar', 'vocab', 'sentences')),
+    video_number INTEGER NOT NULL,
+    completed_at TEXT DEFAULT (datetime('now')),
+    self_rating INTEGER CHECK(self_rating BETWEEN 1 AND 5),
+    notes TEXT,
+    UNIQUE(platform_name, level, unit_number, unit_type, video_number)
+);

@@ -16,6 +16,7 @@ Answers are stored as SHA256 hashes for validation.
 """
 
 import hashlib
+import random
 from typing import Literal
 
 CEFRLevel = Literal["A1", "A2", "B1", "B2", "C1", "C2"]
@@ -549,3 +550,85 @@ def get_bonus_questions_for_level(skill: str, level: str) -> list:
         return all_questions[:2]
     except (ValueError, IndexError):
         return []
+
+
+# Maps questions to practice categories (for micro-test → weakness mapping)
+QUESTION_CATEGORIES = {
+    "write": {
+        "had left": "past_perfect",
+        "however": "transition_words",
+        "also": "transition_words",
+        "had": "past_perfect",
+        "had known": "conditionals",
+        "would have acted": "conditionals",
+        "taking": "gerund_after_verb",
+        "did he discover": "inversion",
+        "has been put": "passive_voice",
+        "had been read": "passive_voice",
+        "clear main idea": "topic_sentence",
+    }
+}
+
+# Mixed exercise banks (categories NOT revealed)
+# Format: {category: [(question, correct_answer, [options])]}
+MIXED_EXERCISE_BANKS = {
+    "expletive_it": [
+        ("___ is raining heavily today.", "It", ["It", "There", "Here", "This", "He"]),
+        ("___ was a pleasure meeting you.", "It", ["It", "That", "There", "What"]),
+        ("___ seems that he doesn't understand.", "It", ["It", "There", "He", "That"]),
+        ("___ is important to practice every day.", "It", ["It", "That", "There", "This"]),
+        ("___ is home to thousands of species.", "It", ["It", "There", "Here", "That"]),
+    ],
+    "modal_might": [
+        ("You ___ want to consider this option.", "might", ["might", "must", "will", "can"]),
+        ("It ___ rain later, so bring an umbrella.", "might", ["might", "must", "will not", "can"]),
+        ("She hasn't arrived yet. She ___ be stuck in traffic.", "might", ["might", "must", "will", "should"]),
+        ("I ___ go to the party, but I'm not sure yet.", "might", ["might", "must", "have to", "will"]),
+        ("___ I ask you a personal question?", "Might", ["Might", "Must", "Will", "Shall"]),
+    ],
+    "preposition_by": [
+        ("The book was written ___ Shakespeare.", "by", ["by", "for", "with", "from"]),
+        ("This gift is ___ you, my friend.", "for", ["by", "for", "with", "to"]),
+        ("The window was broken ___ the storm.", "by", ["by", "for", "with", "because"]),
+        ("I came ___ car, not by bus.", "by", ["by", "for", "in", "on"]),
+        ("The letter was sent ___ mistake.", "by", ["by", "for", "with", "in"]),
+    ],
+    "article_usage": [
+        ("___ pollution is damaging ___ environment.", "No article; the", ["The; the", "No article; the", "The; no article", "No article; no article"]),
+        ("She is ___ university student.", "a", ["a", "an", "the", "no article"]),
+        ("I need ___ advice about my career.", "no article", ["a", "an", "the", "no article"]),
+        ("___ Amazon is ___ longest river.", "The; the", ["The; the", "The; no article", "No article; the", "No article; no article"]),
+        ("He's ___ honest person.", "an", ["a", "an", "the", "no article"]),
+    ],
+    "passive_voice": [
+        ("The report ___ by the assistant yesterday.", "was written", ["was written", "wrote", "is writing", "has written"]),
+        ("This bridge ___ in 1998.", "was built", ["builds", "was built", "built", "is building"]),
+        ("English ___ around the world.", "is spoken", ["is spoken", "speaks", "speaking", "has spoken"]),
+        ("The documents ___ already ___.", "have been signed", ["have been signed", "are signing", "were signing", "have signed"]),
+        ("Smoking ___ in this area.", "is not allowed", ["does not allow", "is not allowed", "not allows", "has not allowed"]),
+    ],
+}
+
+
+def get_mixed_exercise_set(categories: list, count_per_category: int = 2) -> list:
+    """Returns a mixed exercise set from given categories.
+    Each question is shuffled so user cannot guess the category.
+    Returns list of dicts: {question, options, correct, category}
+    Category field is for AI internal use (weakness DB updates).
+    Do NOT display 'category' to the user.
+    """
+    all_exercises = []
+    for cat in categories:
+        if cat in MIXED_EXERCISE_BANKS:
+            exercises = MIXED_EXERCISE_BANKS[cat][:count_per_category]
+            for question, correct, options in exercises:
+                all_exercises.append({
+                    "question": question,
+                    "options": options,
+                    "correct": correct,
+                    "category": cat,
+                })
+    
+    # Shuffle so categories are mixed (not grouped)
+    random.shuffle(all_exercises)
+    return all_exercises

@@ -5,6 +5,51 @@
 youtalk:
   display_name: "YouTalk"
   description: "Video/audio-based English learning platform with structured units"
+  curriculum:
+    naming_convention: "G{unit}-{video}"
+    description: "G=Grammar, V=Vocab, S=Sentences. Format: {type}{unit}-{video}"
+    videos_per_unit: 3
+    unit_types:
+      - grammar
+      - vocab
+      - sentences
+    levels:
+      Basic:
+        unit_range: "1-15"
+        topics:
+          "1": ["articles", "definite/indefinite articles"]
+          "2": ["present simple", "present continuous"]
+          "3": ["pronouns: subject/object", "possessive pronouns"]
+          "4": ["possessive adjectives", "possessive 's"]
+          "5": ["prepositions of time", "prepositions of place"]
+          "6": ["question tags"]
+          "7": ["adverbs of frequency", "adverbs of manner"]
+          "8": ["comparatives", "superlatives"]
+          "9": ["countable/uncountable", "some/any"]
+          "10": ["past simple: regular verbs", "past simple: irregular verbs"]
+          "11": ["past continuous"]
+          "12": ["future with will", "future with going to"]
+          "13": ["present perfect simple"]
+          "14": ["modal verbs: can/could/must/should"]
+          "15": ["conditional type 0", "conditional type 1"]
+      Intermediate:
+        unit_range: "16-30"
+        topics:
+          "16": ["present perfect continuous", "past perfect simple"]
+          "17": ["conditionals type 2", "conditionals type 3"]
+          "18": ["passive voice: present", "passive voice: past"]
+          "19": ["passive voice: future", "passive voice: perfect"]
+          "20": ["reported speech: statements", "reported speech: questions"]
+          "21": ["relative clauses: defining", "relative clauses: non-defining"]
+          "22": ["modal verbs: deduction (must/might/could/can't)"]
+          "23": ["wish/if only", "would rather"]
+          "24": ["inversion after negative adverbials"]
+          "25": ["causative: have/get something done"]
+          "26": ["phrasal verbs: separable/inseparable"]
+          "27": ["linking words: despite/although/nevertheless"]
+          "28": ["future perfect", "future continuous"]
+          "29": ["participle clauses"]
+          "30": ["mixed conditionals"]
   levels:
     - "Basic"
     - "Intermediate"

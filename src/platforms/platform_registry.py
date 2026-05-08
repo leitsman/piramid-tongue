@@ -180,3 +180,44 @@ class PlatformRegistry:
     def reload(self) -> None:
         """Reload platforms from file."""
         self._load_platforms()
+    
+    def get_curriculum(self, platform_name: str) -> Optional[Dict[str, Any]]:
+        """
+        Get curriculum definition for a platform.
+        
+        Args:
+            platform_name: Name of the platform
+            
+        Returns:
+            Curriculum dict with naming_convention, videos_per_unit, unit_types, levels,
+            or None if platform not found or has no curriculum.
+        """
+        platform = self.get_platform(platform_name)
+        if platform is None:
+            return None
+        return platform.get('curriculum')
+    
+    def get_unit_topics(self, platform_name: str, level: str, unit_number: int) -> List[str]:
+        """
+        Get topics for a specific unit in a platform's curriculum.
+        
+        Args:
+            platform_name: Name of the platform
+            level: Level name (e.g., 'Basic', 'Intermediate')
+            unit_number: Unit number
+            
+        Returns:
+            List of topic strings for the unit, or empty list if not found.
+        """
+        curriculum = self.get_curriculum(platform_name)
+        if curriculum is None:
+            return []
+        
+        levels = curriculum.get('levels', {})
+        level_data = levels.get(level)
+        if level_data is None:
+            return []
+        
+        topics = level_data.get('topics', {})
+        unit_key = str(unit_number)
+        return topics.get(unit_key, [])

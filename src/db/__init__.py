@@ -126,3 +126,116 @@ class DB:
                 (skill_name, duration_seconds, self_rating, notes),
             )
             return cursor.lastrowid
+
+    def log_platform_progress(self, platform_name: str, level: str, unit_number: int,
+                              unit_type: str, video_number: int,
+                              self_rating: int | None = None, notes: str | None = None) -> int:
+        """Log progress on a platform video. Returns row ID."""
+        with self.session() as conn:
+            cursor = conn.execute(
+                """INSERT INTO platform_progress 
+                   (platform_name, level, unit_number, unit_type, video_number, self_rating, notes)
+                   VALUES (?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(platform_name, level, unit_number, unit_type, video_number) 
+                   DO UPDATE SET self_rating = excluded.self_rating, notes = excluded.notes""",
+                (platform_name, level, unit_number, unit_type, video_number, self_rating, notes),
+            )
+            return cursor.lastrowid
+
+    def get_platform_progress(self, platform_name: str, level: str | None = None,
+                              unit_number: int | None = None) -> list[sqlite3.Row]:
+        """Get platform progress filtered by platform, optionally by level and/or unit."""
+        query = "SELECT * FROM platform_progress WHERE platform_name = ?"
+        params: list[Any] = [platform_name]
+        
+        if level is not None:
+            query += " AND level = ?"
+            params.append(level)
+        if unit_number is not None:
+            query += " AND unit_number = ?"
+            params.append(unit_number)
+        
+        query += " ORDER BY unit_number, unit_type, video_number"
+        return self.fetchall(query, tuple(params))
+
+    def get_latest_platform_progress(self, platform_name: str) -> sqlite3.Row | None:
+        """Get the most recent progress entry for a platform."""
+        return self.fetchone(
+            """SELECT * FROM platform_progress 
+               WHERE platform_name = ? 
+               ORDER BY completed_at DESC 
+               LIMIT 1""",
+            (platform_name,),
+        )
+
+    def is_video_completed(self, platform_name: str, level: str, unit_number: int,
+                           unit_type: str, video_number: int) -> bool:
+        """Check if a specific video has been completed on a platform."""
+        row = self.fetchone(
+            """SELECT 1 FROM platform_progress 
+               WHERE platform_name = ? AND level = ? AND unit_number = ? 
+               AND unit_type = ? AND video_number = ?""",
+            (platform_name, level, unit_number, unit_type, video_number),
+        )
+        return row is not None
+
+    # --- Weakness tracking for adaptive practice ---
+
+    def add_weakness(self, category: str, description: str | None = None,
+                     source: str = 'structural_analysis') -> int:
+        """Add a new weakness or increment fail_count if category exists.
+        Returns the weakness id.
+        """
+        # Check if weakness already exists for this category
+        existing = self.fetchone(
+            "SELECT id FROM weaknesses WHERE category = ? AND status = 'active'",
+            (category,),
+        )
+        if existing:
+            # Increment fail_count for existing weakness
+            self.execute(
+                "UPDATE weaknesses SET fail_count = fail_count + 1, last_practiced = datetime('now') WHERE id = ?",
+                (existing['id'],),
+            )
+            return existing['id']
+        
+        # Create new weakness
+        with self.session() as conn:
+            cursor = conn.execute(
+                """INSERT INTO weaknesses (category, description, source, fail_count)
+                   VALUES (?, ?, ?, 1)""",
+                (category, description, source),
+            )
+            return cursor.lastrowid
+
+    def get_active_weaknesses(self, limit: int = 5) -> list[sqlite3.Row]:
+        """Get active weaknesses sorted by fail_count DESC."""
+        return self.fetchall(
+            """SELECT * FROM weaknesses 
+               WHERE status = 'active'
+               ORDER BY fail_count DESC
+               LIMIT ?""",
+            (limit,),
+        )
+
+    def increment_fail(self, weakness_id: int) -> None:
+        """Increment fail_count for a weakness."""
+        self.execute(
+            "UPDATE weaknesses SET fail_count = fail_count + 1, last_practiced = datetime('now') WHERE id = ?",
+            (weakness_id,),
+        )
+
+    def increment_pass(self, weakness_id: int) -> None:
+        """Increment pass_count for a weakness. Mark as mastered if pass_count >= 5."""
+        self.execute(
+            """UPDATE weaknesses 
+               SET pass_count = pass_count + 1, 
+                   last_practiced = datetime('now'),
+                   status = CASE WHEN pass_count + 1 >= 5 THEN 'mastered' ELSE status END
+               WHERE id = ?""",
+            (weakness_id,),
+        )
+
+    def report_weakness(self, category: str, description: str | None = None) -> int:
+        """Add a user-reported weakness."""
+        return self.add_weakness(category, description, source='user_reported')

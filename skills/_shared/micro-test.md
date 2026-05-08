@@ -68,6 +68,16 @@ Log micro-test results in daily log under `## Micro-Test`:
 - Recommendation: {text}
 ```
 
+### Step 6: Save Weaknesses to Database
+
+After showing results but BEFORE proceeding to main session:
+
+1. For each INCORRECT answer in the micro-test:
+   a. Map the question to a category using `QUESTION_CATEGORIES` from `src/test_questions.py`
+   b. Call `DB.add_weakness(category, source='micro_test')` or increment fail_count if exists
+   
+2. If score < 3/4, note: "Weaknesses saved. You'll get adaptive practice for these areas."
+
 ## Skills Supporting Micro-Test
 
 | Skill | File | Pre-Session Micro-Test |
