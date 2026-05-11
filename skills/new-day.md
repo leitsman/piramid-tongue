@@ -57,6 +57,22 @@ Analyze the response:
 
 If user says "nothing" / "todo bien" / "skip" / "omitir" → proceed with normal recommendations.
 
+### Step 5b: Weakness Review (NEW — Between checks and recommendations)
+
+1. Import `LeitnerEngine` from `src/core/leitner.py`
+2. Import `generate_exercises_for_word` from `src/test_questions.py`
+3. Initialize `LeitnerEngine` with DB
+4. Query due words: `engine.get_due_reviews(limit=5)`
+5. If no due words: skip to Step 6 (no interruption to flow)
+6. If due words exist: present "Quick review before starting:"
+   - For each due word, generate 2 exercises via `generate_exercises_for_word()`
+   - Present mixed (shuffled) exercises
+   - Process user's answers
+   - Update boxes via `engine.update_box()` — correct=+1, fail minor=-1, fail major=-2
+   - Log results in daily log under "## Weakness Review"
+7. If score < 50%, offer retry with new exercises
+8. If >= 50%, continue to recommendations
+
 ### Step 6: Platform-Pyramid Gap Display
 
 If user has platforms configured in profile.yml:
@@ -74,7 +90,7 @@ If user has platforms configured in profile.yml:
    ```
 5. If no gaps or platforms empty: skip this section
 
-### Step 7: Calculate Skills Needing Attention
+### Step 8: Calculate Skills Needing Attention
 
 Use pyramid engine from `src/core/pyramid_engine.py`:
 
@@ -99,7 +115,7 @@ Use pyramid engine from `src/core/pyramid_engine.py`:
    - Gap detection results (from Step 6)
    - Time of day (morning = vocab/listen, afternoon = read/write, evening = speak)
 
-### Step 8: Create Today's Log
+### Step 9: Create Today's Log
 
 1. Use `src/logs/writer.py` → LogWriter class
 2. Call `create_daily_log()` with today's date
@@ -134,11 +150,14 @@ Use pyramid engine from `src/core/pyramid_engine.py`:
    ## Gap Analysis
    -
    
+   ## Weakness Review
+   -
+   
    ## Notes
    -
    ```
 
-### Step 9: Show User Recommendations
+### Step 10: Show User Recommendations
 
 Output format:
 ```

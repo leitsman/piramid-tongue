@@ -55,38 +55,48 @@ Ask user which mode they want:
 After user provides their text (creation or translation):
 
 1. Import `StructuralAnalyzer` from `src/analysis/structural.py`
-2. Run `analyzer.analyze(text)` on the user's written text
-3. Display results in natural language:
+2. Import `DB` from `src/db/__init__.py`
+3. Run `analyzer.analyze(text)` on the user's written text
+4. Display results in natural language:
    ```
    📝 Structural Analysis:
    - Score: X/100
    - Issues found: [list with suggestions]
    - Main areas to improve: [summary]
    ```
-4. If issues found, log in daily log under `## Structural Analysis`
-5. Ask user what to do next:
+5. If issues found, log in daily log under `## Structural Analysis`
+6. **Auto-detection flow** (NEW — saves weaknesses silently):
+   - For each detected issue with `issue.word` and `issue.error_type`:
+     - Call `DB.add_word_weakness(word, error_type, context_example, source='structural_analysis')`
+     - Log to daily log: `"Auto-detected weakness: {word} ({error_type})"`
+   - **No confirmation prompt** — auto-saves silently
+7. Ask user what to do next:
    ```
    Options after analysis:
    1. Continue to vicios detection
    2. Get detailed explanations of issues
    3. Práctica adaptativa mixta — basada en tus debilidades detectadas
    ```
-6. If user selects option 3, follow **Step 6: Adaptive Mixed Practice**
+8. If user selects option 3, follow **Step 6: Adaptive Mixed Practice**
 
 ### Step 6: Adaptive Mixed Practice (Option 3)
 
 If user selects option 3:
 
 1. **SKILL: Load `skills/_shared/adaptive-practice.md` before starting.**
-2. Query `weaknesses` table for active categories (from DB)
-3. If weaknesses found:
-   - Follow adaptive-practice.md flow (mixed exercises)
-   - Update weaknesses table after completion
-4. If no weaknesses:
-   - "No weaknesses detected. Try the mixed exercises from these common areas:"
-   - Generate a mixed set from MIXED_EXERCISE_BANKS (expletive_it, modal_might, preposition_by)
-5. Log results in daily log under "## Adaptive Practice"
-6. After practice, proceed to Step 7 (Vicios Detection)
+2. **SKILL: Load `skills/_shared/exercise-design.md`** for exercise format guidelines.
+3. Import `LeitnerEngine` from `src/core/leitner.py`
+4. Import `generate_exercises_for_word` from `src/test_questions.py`
+5. Initialize `LeitnerEngine` with DB
+6. Check for due reviews: `engine.get_due_reviews(limit=5)`
+7. If due words found:
+   - Generate 2 exercises per word: `generate_exercises_for_word(word, error_type, count=2)`
+   - Present mixed (shuffled) exercises following exercise-design.md
+   - Update boxes via `engine.update_box()` after each answer
+8. If no due words:
+   - "No words due for review today. Your weaknesses will be practiced when review is due."
+9. Log results in daily log under "## Weakness Review"
+10. After practice, proceed to Step 7 (Vicios Detection)
 
 ### Step 7: Vicios Detection
 

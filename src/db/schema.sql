@@ -93,8 +93,19 @@ CREATE TABLE IF NOT EXISTS weaknesses (
     fail_count INTEGER DEFAULT 0,
     pass_count INTEGER DEFAULT 0,
     status TEXT DEFAULT 'active' CHECK(status IN ('active', 'mastered', 'ignored')),
-    source TEXT DEFAULT 'structural_analysis' CHECK(source IN ('micro_test', 'structural_analysis', 'user_reported', 'transcription'))
+    source TEXT DEFAULT 'structural_analysis' CHECK(source IN ('micro_test', 'structural_analysis', 'user_reported', 'transcription')),
+    -- New word-specific tracking columns (Leitner box system)
+    word TEXT NOT NULL DEFAULT '',
+    error_type TEXT NOT NULL DEFAULT '',
+    context_example TEXT,
+    box_level INTEGER DEFAULT 3,
+    consecutive_correct INTEGER DEFAULT 0,
+    next_review TEXT
 );
+
+-- Migration: Add new columns to existing weaknesses table
+-- Using ALTER TABLE for existing installations (backward compatibility)
+-- New records will have word='', error_type='', box_level=3, consecutive_correct=0, next_review=NULL
 
 -- Platform-specific progress tracking (YouTalk, Duolingo, etc.)
 CREATE TABLE IF NOT EXISTS platform_progress (

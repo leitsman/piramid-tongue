@@ -616,6 +616,9 @@ def get_mixed_exercise_set(categories: list, count_per_category: int = 2) -> lis
     Returns list of dicts: {question, options, correct, category}
     Category field is for AI internal use (weakness DB updates).
     Do NOT display 'category' to the user.
+    
+    DEPRECATED: This function uses static MIXED_EXERCISE_BANKS.
+    Use generate_exercises_for_word() for dynamic word-specific exercises instead.
     """
     all_exercises = []
     for cat in categories:
@@ -632,3 +635,143 @@ def get_mixed_exercise_set(categories: list, count_per_category: int = 2) -> lis
     # Shuffle so categories are mixed (not grouped)
     random.shuffle(all_exercises)
     return all_exercises
+
+
+# Exercise templates for word-specific dynamic generation
+# Format: list of (template_string, correct_answer, [distractors])
+# Template uses ___ as placeholder for the correct answer
+EXERCISE_TEMPLATES = {
+    "expletive_usage": [
+        ("___ is raining heavily today.", "It", ["There", "Here", "This", "He"]),
+        ("___ was a pleasure meeting you.", "It", ["That", "There", "What", "He"]),
+        ("___ seems that nobody is home.", "It", ["There", "That", "This", "He"]),
+        ("___ is important to practice every day.", "It", ["That", "There", "This", "He"]),
+        ("___ is home to thousands of species.", "It", ["There", "Here", "That", "This"]),
+        ("___ is no use crying over spilled milk.", "It", ["There", "This", "That", "What"]),
+        ("___ took me an hour to get here.", "It", ["That", "This", "There", "Here"]),
+        ("___ is said that practice makes perfect.", "It", ["There", "That", "This", "What"]),
+    ],
+    "modal_might": [
+        ("You ___ want to consider this option.", "might", ["must", "will", "can", "shall"]),
+        ("It ___ rain later, so bring an umbrella.", "might", ["must", "will not", "can", "should"]),
+        ("She hasn't arrived yet. She ___ be stuck in traffic.", "might", ["must", "will", "should", "can"]),
+        ("I ___ go to the party, but I'm not sure yet.", "might", ["must", "have to", "will", "should"]),
+        ("___ I ask you a personal question?", "Might", ["Must", "Will", "Can", "Shall"]),
+        ("He ___ be the smartest person in the room.", "might", ["must", "can", "will", "should"]),
+    ],
+    "preposition_by": [
+        ("The book was written ___ Shakespeare.", "by", ["for", "with", "from", "of"]),
+        ("This gift is ___ you, my friend.", "for", ["by", "with", "to", "from"]),
+        ("The window was broken ___ the storm.", "by", ["for", "with", "because", "from"]),
+        ("I came ___ car, not by bus.", "by", ["for", "in", "on", "with"]),
+        ("The letter was sent ___ mistake.", "by", ["for", "with", "in", "on"]),
+        ("The cake was made ___ my grandmother.", "by", ["for", "with", "from", "of"]),
+    ],
+    "article_usage": [
+        ("___ pollution is damaging ___ environment.", ["No article", "The"], [["The", "A"], ["the", "no article"]]),
+        ("She is ___ university student.", "a", ["an", "the", "no article"]),
+        ("I need ___ advice about my career.", "no article", ["a", "an", "the"]),
+        ("___ Amazon is ___ longest river.", ["The", "the"], [["The", "A"], ["the", "a"]]),
+        ("He's ___ honest person.", "an", ["a", "the", "no article"]),
+        ("___ sun rises in the east.", "The", ["A", "An", "No article"]),
+        ("She is ___ best student in class.", "the", ["a", "an", "no article"]),
+    ],
+    "gerund_infinitive": [
+        ("I enjoy ___ to music while working.", "listening", ["to listen", "listen", "listened"]),
+        ("He suggested ___ the meeting until tomorrow.", "postponing", ["to postpone", "postpone", "postponed"]),
+        ("She avoids ___ late for appointments.", "being", ["to be", "be", "been"]),
+        ("I remember ___ your name somewhere.", "hearing", ["to hear", "hear", "heard"]),
+        ("Stopping ___ is very difficult.", "smoking", ["to smoke", "smoke", "to have smoked"]),
+    ],
+    "subject_verb": [
+        ("Neither the teacher nor the students ___ aware of the change.", "are", ["is", "was", "were"]),
+        ("Each of the books ___ been read by the class.", "has", ["have", "had", "is"]),
+        ("Nobody ___ to leave early today.", "wants", ["want", "wanted", "wanting"]),
+        ("Either my sisters or my brother ___ coming to the party.", "is", ["are", "was", "were"]),
+        ("___ of the information is accurate.", "None", ["Some", "All", "Many"]),
+    ],
+    "omission": [
+        ("The reason is ___ she didn't study.", "that", ["because", "why", "what"]),
+        ("I don't know ___ she left early.", "why", ["because", "that", "what"]),
+        ("Tell me ___ you need help.", "if", ["that", "because", "when"]),
+        ("___ makes me happy is seeing progress.", "What", ["That", "This", "It"]),
+        ("I wonder ___ he will pass the exam.", "if", ["that", "because", "when"]),
+    ],
+    "wrong_word": [
+        ("I need to ___ an appointment with the doctor.", "make", ["do", "take", "have"]),
+        ("The movie was very ___ - I loved it!", "enjoyable", ["enjoy", "enjoyed", "enjoying"]),
+        ("She decided to ___ her studies abroad.", "continue", ["continue to", "continuing", "continues"]),
+        ("It's ___ to learn a new language.", "difficult", ["difficulty", "difficultly", "difficultness"]),
+        ("Please ___ attention to the speaker.", "pay", ["take", "give", "make"]),
+    ],
+    "wrong_position": [
+        ("I ___ never been to Paris.", "have", ["has", "had", "am"]),
+        ("She ___ always late to meetings.", "is", ["are", "was", "be"]),
+        ("They ___ sometimes eat out on weekends.", "do", ["does", "did", "is"]),
+        ("He ___ rarely complains about anything.", "rarely", ["is rarely", "do rarely", "does rarely"]),
+        ("I would ___ go to the movies tonight.", "like to", ["to like", "like", "liked to"]),
+    ],
+}
+
+
+def generate_exercises_for_word(word: str, error_type: str, count: int = 2) -> list[dict]:
+    """Generate AI exercises for a specific word and error type.
+    
+    Uses template-based generation with pattern matching.
+    Each exercise has 4 options: 1 correct, 3 plausible distractors.
+    
+    Args:
+        word: The user's weak word to focus on
+        error_type: Type of error (expletive_usage, modal_might, etc.)
+        count: Number of exercises to generate
+        
+    Returns:
+        List of exercise dicts with keys: question, options, correct, word, error_type
+    """
+    import random
+    
+    if error_type not in EXERCISE_TEMPLATES:
+        # Fallback: return empty if no template for this error_type
+        return []
+    
+    templates = EXERCISE_TEMPLATES[error_type]
+    
+    # Select random templates (avoid duplicates)
+    selected_templates = []
+    available = list(templates)
+    for _ in range(min(count, len(available))):
+        if not available:
+            break
+        idx = random.randint(0, len(available) - 1)
+        selected_templates.append(available.pop(idx))
+    
+    exercises = []
+    for template in selected_templates:
+        if len(template) == 3:
+            # Simple format: (question_template, correct, distractors)
+            question_template, correct_answer, distractors = template
+            options = [correct_answer] + distractors[:3]
+        elif len(template) == 4:
+            # Complex format for multi-blank (article_usage)
+            # (template, [correct_answers], [distractors_per_blank])
+            question_template, correct_answers, distractors_per_blank = template
+            # For now, handle single-blank versions only
+            # Multi-blank would need more complex logic
+            continue
+        
+        # Shuffle options
+        random.shuffle(options)
+        
+        # Format question with placeholder replaced by options list
+        # The placeholder is used for AI to know where to fill
+        question = question_template.replace("___", f"[{correct_answer}]")
+        
+        exercises.append({
+            "question": question_template,
+            "options": options,
+            "correct": correct_answer,
+            "word": word,
+            "error_type": error_type,
+        })
+    
+    return exercises

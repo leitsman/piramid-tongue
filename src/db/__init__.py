@@ -239,3 +239,83 @@ class DB:
     def report_weakness(self, category: str, description: str | None = None) -> int:
         """Add a user-reported weakness."""
         return self.add_weakness(category, description, source='user_reported')
+
+    # --- Word-specific weakness tracking (Leitner system) ---
+
+    def add_word_weakness(self, word: str, error_type: str, context_example: str | None = None,
+                          source: str = 'structural_analysis') -> int:
+        """Add a new word-specific weakness or update existing one.
+        
+        If word+error_type combo already exists for an active weakness, updates last_practiced
+        instead of creating a duplicate.
+        
+        Returns the weakness id.
+        """
+        # Check if word+error_type combo already exists as active weakness
+        existing = self.fetchone(
+            """SELECT id FROM weaknesses 
+               WHERE word = ? AND error_type = ? AND status = 'active'""",
+            (word, error_type),
+        )
+        if existing:
+            # Update last_practiced instead of creating duplicate
+            self.execute(
+                "UPDATE weaknesses SET last_practiced = datetime('now') WHERE id = ?",
+                (existing['id'],),
+            )
+            return existing['id']
+        
+        # Create new word-specific weakness with Leitner defaults
+        today = "datetime('now')"
+        with self.session() as conn:
+            cursor = conn.execute(
+                """INSERT INTO weaknesses 
+                   (word, error_type, context_example, source, box_level, consecutive_correct, next_review, last_practiced)
+                   VALUES (?, ?, ?, ?, 1, 0, date('now'), datetime('now'))""",
+                (word, error_type, context_example, source),
+            )
+            return cursor.lastrowid
+
+    def get_words_due(self, limit: int = 5) -> list[sqlite3.Row]:
+        """Get word-specific weaknesses due for review.
+        
+        Returns weaknesses where next_review <= now AND status = 'active'
+        and box_level < 5 (not mastered).
+        Ordered by box_level ASC (lower boxes = more urgent).
+        """
+        return self.fetchall(
+            """SELECT id, word, error_type, context_example, box_level, consecutive_correct, next_review
+               FROM weaknesses
+               WHERE status = 'active' 
+                 AND box_level < 5
+                 AND (next_review IS NULL OR datetime(next_review) <= datetime('now'))
+               ORDER BY box_level ASC, next_review ASC
+               LIMIT ?""",
+            (limit,),
+        )
+
+    def update_box_level(self, weakness_id: int, new_box: int, consecutive_correct: int) -> None:
+        """Update box_level, consecutive_correct, last_practiced, and next_review.
+        
+        If box_level reaches 5 with consecutive_correct >= 3, marks status as 'mastered'.
+        """
+        # Calculate next_review date based on new box level
+        intervals = {1: 1, 2: 2, 3: 4, 4: 7, 5: 14}
+        interval_days = intervals.get(new_box, 1)
+        next_review_date = f"date('now', '+{interval_days} days')"
+        
+        # Determine if mastered (box 5 with 3+ consecutive correct)
+        status_update = ""
+        if new_box >= 5 and consecutive_correct >= 3:
+            status_update = ", status = 'mastered'"
+        
+        self.execute(
+            f"""UPDATE weaknesses 
+               SET box_level = ?, 
+                   consecutive_correct = ?, 
+                   last_practiced = datetime('now'),
+                   next_review = {next_review_date}
+                   {status_update}
+               WHERE id = ?""",
+            (new_box, consecutive_correct, weakness_id),
+        )

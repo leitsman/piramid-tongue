@@ -21,6 +21,8 @@ class Issue:
     line_sentence: str
     suggestion: str
     severity: Literal["low", "medium", "high"] = "medium"
+    word: str = ""  # NEW: The specific word user struggled with
+    error_type: str = ""  # NEW: Specific error type for word-specific tracking
     
     def to_dict(self) -> dict:
         return {
@@ -28,6 +30,8 @@ class Issue:
             "line/sentence": self.line_sentence,
             "suggestion": self.suggestion,
             "severity": self.severity,
+            "word": self.word,
+            "error_type": self.error_type,
         }
 
 
@@ -153,6 +157,11 @@ class StructuralAnalyzer:
         
         # 6. Check preposition patterns
         issues.extend(self._check_prepositions(sentences))
+        
+        # Populate word and error_type fields for all issues
+        for issue in issues:
+            issue.word = issue.word or extract_word(issue.line_sentence, issue.type)
+            issue.error_type = ISSUE_TO_ERROR_TYPE.get(issue.type, "")
         
         result.issues = issues
         
@@ -368,28 +377,97 @@ class StructuralAnalyzer:
         return f"Score: {score:.0f}/100. Main issues: {', '.join(issue_descriptions)}"
 
 
-# Maps StructuralAnalyzer issue types to adaptive practice categories
-ISSUE_TO_CATEGORY = {
+# Maps StructuralAnalyzer issue types to error types (word-specific tracking)
+ISSUE_TO_ERROR_TYPE = {
     "article_overuse": "article_usage",
-    "article_missing": "article_usage", 
-    "run_on_sentence": "sentence_structure",
-    "sentence_fragment": "sentence_structure",
-    "spanish_interference_false_friend": "false_friends",
-    "verb_tense_inconsistency": "verb_tense",
+    "article_missing": "article_usage",
+    "run_on_sentence": "wrong_word",
+    "sentence_fragment": "omission",
+    "spanish_interference_false_friend": "wrong_word",
+    "verb_tense_inconsistency": "wrong_word",
     "preposition_error": "preposition_by",
-    "expletive_it_misuse": "expletive_it",
+    "expletive_it_misuse": "expletive_usage",
     "modal_verb_error": "modal_might",
+    "tense_inconsistency": "wrong_word",
 }
+
+
+def extract_word(text: str, issue_type: str) -> str:
+    """Extract the specific problematic word from context based on issue type.
+    
+    Args:
+        text: The sentence or text where the issue was detected
+        issue_type: The type of issue detected
+        
+    Returns:
+        The specific word associated with the error
+    """
+    text_lower = text.lower()
+    
+    # Article-related issues
+    if issue_type == "article_overuse":
+        # Find repeated "the"
+        if "the" in text_lower:
+            return "the"
+        return "the"
+    
+    if issue_type == "article_missing":
+        # Check for patterns that suggest missing article
+        return "a/an"
+    
+    # False friend issues
+    if issue_type == "spanish_interference_false_friend":
+        false_friends = ["actually", "assist", "sensible", "embarrassed", "library"]
+        for word in false_friends:
+            if word in text_lower:
+                return word
+        return ""
+    
+    # Preposition errors
+    if issue_type == "preposition_error":
+        spanish_preps = ["depend of", "think in", "listen in", "explain me", "ask me", 
+                        "married with", "enter to", "consist in", "in the night", 
+                        "in monday", "in tuesday", "in wednesday", "in thursday", 
+                        "in friday", "in saturday", "in sunday"]
+        for prep in spanish_preps:
+            if prep in text_lower:
+                # Return the preposition involved
+                return prep.split()[-1]
+        return "on"  # default
+    
+    # Verb tense issues
+    if issue_type in ("verb_tense_inconsistency", "tense_inconsistency"):
+        return "verb tense"
+    
+    # Expletive issues (it/there/this)
+    if issue_type == "expletive_it_misuse":
+        return "it"
+    
+    # Modal verb issues
+    if issue_type == "modal_verb_error":
+        return "might"
+    
+    # Run-on or fragment - return empty as no specific word
+    if issue_type in ("run_on_sentence", "sentence_fragment"):
+        words = text.split()
+        if len(words) > 0:
+            return words[0][:20]  # Return first word as approximation
+        return ""
+    
+    return ""
+
 
 def get_practice_recommendations(analysis_result: AnalysisResult) -> list:
     """Convert structural analysis issues to practice recommendations.
-    Returns list of category names sorted by severity.
+    Returns list of (word, error_type) tuples sorted by severity.
     """
     seen = set()
     recs = []
     for issue in analysis_result.issues:
-        cat = ISSUE_TO_CATEGORY.get(issue.type)
-        if cat and cat not in seen:
-            seen.add(cat)
-            recs.append(cat)
+        error_type = ISSUE_TO_ERROR_TYPE.get(issue.type)
+        if error_type and error_type not in seen:
+            seen.add(error_type)
+            # Use extracted word if available, otherwise use issue type as proxy
+            word = issue.word if issue.word else extract_word(issue.line_sentence, issue.type)
+            recs.append((word, error_type))
     return recs

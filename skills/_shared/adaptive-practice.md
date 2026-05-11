@@ -1,70 +1,94 @@
 # Shared Adaptive Practice Instructions
 
-> This file is imported by skill files that support adaptive mixed practice.
+> This file is imported by skill files that support word-specific adaptive practice.
+> **IMPORTANT**: This file now uses the Leitner box system and word-specific weakness tracking.
+> For the old category-based flow, see git history.
 
 ## When to Use
-- After structural analysis detects issues (in write mode)
-- After micro-test shows weaknesses (score < 3/4 or category-specific fail)
+- After structural analysis detects issues (in write mode) — auto-detection saves to weakness DB
+- After micro-test shows weaknesses
 - User explicitly says "I don't understand X" or "practicar X"
 
 ## Flow
 
-### Step 1: Check Weaknesses
-1. Query `weaknesses` table for active categories sorted by fail_count DESC
-2. Select top 3 categories (if fewer, use all available)
-3. If no weaknesses exist and user didn't request practice → skip this flow
+### Step 1: Check Due Words (Leitner)
+1. Import `LeitnerEngine` from `src/core/leitner.py`
+2. Import `generate_exercises_for_word` from `src/test_questions.py`
+3. Initialize `LeitnerEngine` with DB path
+4. Call `engine.get_due_reviews(limit=5)` to get words due for review
+5. If no due words and user didn't request practice → skip this flow
+6. If due words exist → present as "Quick review before starting:"
 
-### Step 2: Brief Explanation (user-requested only)
-If user said "I don't understand X":
-- Give 2-3 sentence explanation with 2 example sentences
-- Do NOT give practice questions yet
+### Step 2: Generate Exercises Per Word
+For each due word:
+1. Call `generate_exercises_for_word(word, error_type, count=2)`
+2. This creates 2 exercises per word using templates
+3. Collect all exercises into a single list
 
-### Step 3: Present Mixed Exercise
-1. Import `get_mixed_exercise_set` from `src/test_questions.py`
-2. Call `get_mixed_exercise_set(categories, count_per_category=2)`
-3. Shuffle all questions so categories are NOT grouped
-4. Present ONE set:
+### Step 3: Present Mixed Exercises (SHUFFLED)
+1. **SKILL: Load `skills/_shared/exercise-design.md`** for format guidelines
+2. Shuffle all exercises so error types are NOT grouped
+3. Present ONE question at a time:
    ```
-   Fill in the blank with the correct word/phrase:
-   
-   1. "___ seems that nobody is home."
-      A) It  B) There  C) He  D) That
-   
-   2. "You ___ want to check the weather first."
-      A) must  B) might  C) will  D) can
-   
-   3. "The painting was sold ___ a collector."
-      A) by  B) for  C) to  D) with
-   
-   (Questions continue mixed)
-   ```
-5. **Do NOT reveal which category each question tests**
-6. Wait for user's answers for ALL questions
+   Fill in the blank:
 
-### Step 4: Feedback (AFTER all answers)
-After user answers ALL questions:
-1. Show results:
+   "___ is raining heavily today."
+   A) It  B) There  C) Here  D) This
    ```
-   Results:
-   ✅ Q1: "It seems..." — Correct! (expletive "it")
-   ❌ Q2: You said "can". Correct is "might".
-   ✅ Q3: "sold by a collector" — Correct! (passive voice agent)
+4. **Do NOT reveal error_type to user** — no category labels shown
+5. Wait for user's answer
+
+### Step 4: Feedback (AFTER each answer)
+After user answers:
+1. Show immediate result:
    ```
-2. For each wrong answer: give 1-sentence explanation
-3. Calculate score:
-   - >= 80%: "Great! Weakness improving."
-   - 50-79%: "Keep practicing — [categories] still need work."
-   - < 50%: Show more tips and offer to retry
+   ✅ Correct! (expletive "it")
+   ❌ Not quite. The correct answer is "might". ("might" expresses possibility)
+   ```
+2. For wrong answers: give 1 short explanation
+3. **Do NOT reveal the category name**
 
-### Step 5: Retry Logic
-If score < 50%:
-- Give 1 additional tip per weak category
-- Offer: "Want to try another set?"
-  - Yes → generate new set with same categories
-  - No → save to weaknesses table and continue
+### Step 5: Update Boxes
+After all exercises:
+1. For each answer: call `engine.update_box(weakness_id, correct, severity)`
+   - correct=True → box advances +1
+   - correct=False, minor severity → box drops -1
+   - correct=False, major severity → box drops -2
+2. Severity determination:
+   - If user's wrong answer was a plausible distractor → "minor"
+   - If user's answer shows fundamental misunderstanding → "major"
 
-### Step 6: Update Database
-- For each correct answer: increment pass_count
-- For each wrong answer: increment fail_count
-- If pass_count >= 5 for any category → status = 'mastered'
-- Log results in daily log under "## Adaptive Practice"
+### Step 6: Retry Logic
+After session:
+1. Calculate score (correct / total)
+2. If score < 50%:
+   - Offer: "Want to try another set?"
+   - Yes → generate new exercises for same words
+   - No → save and continue
+3. If score >= 50%:
+   - "Good progress! Keep practicing."
+   - Continue to next step
+
+### Step 7: Update Database
+- Box levels are already updated via `engine.update_box()`
+- Log results in daily log under "## Weakness Review"
+- If box reaches 5 with consecutive_correct >= 3 → status = 'mastered'
+
+## Key Differences from Old Flow
+
+| Old Flow | New Flow |
+|----------|----------|
+| Category-based (article_usage) | Word-specific ("the", "it") |
+| Static MIXED_EXERCISE_BANKS | Dynamic `generate_exercises_for_word()` |
+| increment_pass/fail | `update_box()` with Leitner intervals |
+| pass_count >= 5 | box_level=5 + consecutive_correct>=3 |
+
+## Integration Points
+
+- `skills/write.md`: After structural analysis → auto-detects and saves to weakness DB
+- `skills/new-day.md`: Between checks and recommendations → presents due words for review
+
+## Deprecated
+
+The old `get_mixed_exercise_set()` function and MIXED_EXERCISE_BANKS are deprecated.
+Use `generate_exercises_for_word()` for all new exercise generation.
