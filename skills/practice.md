@@ -50,8 +50,7 @@ platforms:
 
 ### Step 5: Log Session and Update
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Notes" or create "## External Practice" section:
+1. Open `logs/YYYY-MM-DD.md` and append under "## Notes" or create "## External Practice" section:
    ```
    - Platform: {name}, Duration: {n} min, Rating: {rating}/5, Notes: {notes}
    ```

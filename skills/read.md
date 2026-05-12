@@ -81,8 +81,7 @@ Ask user to rate comprehension (1-5):
 
 ### Step 5: Log Session and Update
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Reading Session":
+1. Open `logs/YYYY-MM-DD.md` and append under "## Reading Session":
    ```
    - Source: {title}, Duration: {n} min, Self-rating: {rating}/5, New words: {words}
    ```

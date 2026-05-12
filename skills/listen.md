@@ -81,8 +81,7 @@ Ask user to rate their comprehension (1-5):
 
 ### Step 5: Log Session and Update
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Listening Practice":
+1. Open `logs/YYYY-MM-DD.md` and append under "## Listening Practice":
    ```
    - Content: {source}, Duration: {n} min, Self-rating: {rating}/5
    ```

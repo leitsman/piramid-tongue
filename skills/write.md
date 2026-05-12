@@ -112,8 +112,7 @@ If user selects option 3:
 
 ### Step 8: Log Session and Update
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Writing Exercise":
+1. Open `logs/YYYY-MM-DD.md` and append under "## Writing Exercise":
    ```
    - Mode: {mode}, Topic: {topic}
    - Structural Analysis: Score {score}/100, Issues: {n}

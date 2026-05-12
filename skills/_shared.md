@@ -93,10 +93,13 @@ Patterns are configured in `configs/vicios_patterns.yaml`.
 | `src/core/config.py` | Config class for loading profile settings |
 | `src/core/pyramid_engine.py` | PyramidState class with skill dependencies |
 | `src/core/spaced_repetition.py` | SM-2 algorithm implementation |
+| `src/core/leitner.py` | Leitner box system for weakness tracking |
 | `src/db/__init__.py` | DB class for SQLite operations |
 | `src/db/schema.sql` | Database schema |
-| `src/logs/writer.py` | LogWriter class for daily logs |
+| `src/logs/writer.py` | LogWriter class (utility — AI writes logs directly to markdown) |
 | `src/test_questions.py` | Hidden level test with SHA256-hashed answers |
+| `src/analysis/structural.py` | Rule-based writing analysis |
+| `src/platforms/gap_detector.py` | Platform-vs-skill gap detection |
 
 ## AI Execution Workflow
 

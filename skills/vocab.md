@@ -66,8 +66,7 @@ Vocabulary practice with spaced repetition (SM-2) and new word learning.
 
 ### Step 4: Log Session
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Vocab Review":
+1. Open `logs/YYYY-MM-DD.md` and append under "## Vocab Review":
    ```
    - Reviewed {n} words, {m} new words learned. Rating distribution: ...
    ```

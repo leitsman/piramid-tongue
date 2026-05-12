@@ -70,8 +70,7 @@ Ask user to rate their speaking (1-5):
 
 ### Step 5: Log Session and Update
 
-1. Use `src/logs/writer.py` → LogWriter
-2. Append to today's log under "## Speaking Drill":
+1. Open `logs/YYYY-MM-DD.md` and append under "## Speaking Drill":
    ```
    - Mode: {mode}, Duration: {n} min, Self-rating: {rating}/5
    ```

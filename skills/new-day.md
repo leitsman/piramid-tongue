@@ -17,7 +17,7 @@ Start a daily session, check progress, and recommend 2-3 skills to practice.
 
 ### Step 2: Read Previous Logs
 
-1. Check `logs/` directory for existing logs using LogWriter from `src/logs/writer.py`
+1. Check `logs/` directory for existing log files
 2. Read the most recent log (if any) to understand what was practiced yesterday
 3. Get streak information from `configs/profile.yml`
 
@@ -117,9 +117,7 @@ Use pyramid engine from `src/core/pyramid_engine.py`:
 
 ### Step 9: Create Today's Log
 
-1. Use `src/logs/writer.py` → LogWriter class
-2. Call `create_daily_log()` with today's date
-3. Template:
+1. Open `logs/YYYY-MM-DD.md` and create the log file if it doesn't exist:
    ```markdown
    # Log for {date}
    
@@ -138,25 +136,12 @@ Use pyramid engine from `src/core/pyramid_engine.py`:
    ## Speaking Drill
    -
    
-   ## Vicios Detected
-   -
-   
-   ## Micro-Test
-   -
-   
-   ## Self-Report
-   -
-   
-   ## Gap Analysis
-   -
-   
    ## Weakness Review
    -
    
    ## Notes
    -
    ```
-
 ### Step 10: Show User Recommendations
 
 Output format:

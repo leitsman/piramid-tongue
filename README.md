@@ -208,8 +208,7 @@ piramid-tongue/
 ├── tests/                    # Test suite
 ├── logs/                     # Daily session logs (gitignored)
 ├── data/                     # SQLite database (gitignored)
-├── configs/                  # User config files
-└── .sdd/                     # SDD artifacts (gitignored)
+└── openspec/                 # SDD artifacts (gitignored)
 ```
 
 ## Persistence
