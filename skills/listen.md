@@ -4,111 +4,153 @@
 User says `/pt listen` or `/pt-listen`
 
 ## Purpose
-Listening practice with content suggestions by CEFR level and self-rating.
+Listening practice with 4 progressive levels and YouGlish integration for unknown words.
+
+## 4 Levels of Listen
+
+| Level | Description | Content |
+|-------|-------------|---------|
+| 1 | Con subtítulos | Videos con subtitles |
+| 2 | Alternar con/sin subtítulos | Basado en resultados del día anterior |
+| 3 | Sin subtítulos | Videos sin subtitles |
+| 4 | Podcasts | Solo audio, sin referencia visual |
 
 ## Steps
 
-### Step 1: Check Profile for CEFR Level
+### Step 1: Check User Profile and Listen Level
 
-1. Read `configs/profile.yml`
-2. Get user's `level` (CEFR level)
-
-### Pre-Session Micro-Test
-
-**SKILL: Load `skills/_shared/micro-test.md` before starting.**
-
-1. Import MICRO_TESTS from `src/test_questions.py`:
-   ```python
-   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
-   ```
-2. Check if listen skill has < 100 XP in `skills_progress` table:
+1. Read `configs/profile.yml` for CEFR level
+2. Query `listening_progress` table for current listen_level:
    ```sql
-   SELECT xp FROM skills_progress WHERE skill_name = 'listen'
+   SELECT listen_level FROM listening_progress ORDER BY id DESC LIMIT 1
    ```
-3. If (listen_xp < 100) OR (user says "test me" / "ponme a prueba"):
-   a. Select 4 random questions from `MICRO_TESTS["listen"][cefr_level]`
-   b. Present questions one by one, wait for answer (A/B/C/D)
-   c. Track score
-   d. If score == 4/4: offer 2 bonus questions from next level
-   e. Log result in today's daily log under "## Micro-Test: listen"
-   f. If score < 3/4: recommend practicing prerequisites (e.g., /pt vocab, /pt read)
-4. If listen_xp >= 100 OR user says "skip": proceed to main session
+   - If no records, default to level 1
+3. Get last session info for level 2 logic:
+   ```sql
+   SELECT * FROM listening_progress WHERE listen_level = 2 ORDER BY id DESC LIMIT 1
+   ```
 
-### Step 2: Suggest Content by Level
+### Step 2: Suggest Content Based on Level
 
-Based on user's level, suggest appropriate content:
-
-**A1-A2 Level:**
-- BBC Learning English (simple videos)
-- ESLPod
-- Children's English content
-- Slow, clear speech
-
-**B1 Level:**
-- BBC World Service
+**Level 1 — Con subtítulos:**
+- BBC Learning English
 - VOA Learning English
+- ESLPod
 - TED-Ed (simple topics)
-- Native content with subtitles
+- YouTalk videos
 
-**B2 Level:**
-- TED Talks (various topics)
-- Native podcasts
-- News in slow English
-- YouTube documentaries
+**Level 2 — Alternar:**
+- Apply alternation logic based on last session:
+  - If last session had used_subtitles = TRUE and rating >= 4 → suggest WITHOUT subtitles today
+  - If last session had used_subtitles = TRUE and rating < 4 → suggest WITH subtitles (repeat)
+  - If last session had used_subtitles = FALSE and rating >= 4 → suggest WITHOUT subtitles (continue)
+  - If last session had used_subtitles = FALSE and rating < 4 → suggest WITH subtitles
+- Content: Same sources as Level 1
 
-**C1-C2 Level:**
-- Native speed podcasts (This American Life, etc.)
-- Netflix with English subtitles
-- Native TED Talks
-- Radio shows (NPR, BBC Radio 4)
+**Level 3 — Sin subtítulos:**
+- BBC World Service
+- Native YouTube content
+- Documentaries
+
+**Level 4 — Podcasts:**
+- NPR (All Things Considered, Fresh Air)
+- This American Life
+- BBC Radio 4
+- Tech podcasts if objective is technical
 
 ### Step 3: User Practices Listening
 
-1. User watches/listens to content
-2. User notes:
-   - Source/content name
-   - Duration of practice
-   - Any challenging parts
+User reports after practice:
+1. Content name/source
+2. Duration (minutes)
+3. Did you use subtitles? (for level 2)
+4. Comprehension self-rating (1-5):
+   - 1: Complete struggle (<30%)
+   - 2: Difficult (30-50%)
+   3: Moderate (50-70%)
+   - 4: Good (70-90%)
+   - 5: Excellent (>90%)
 
-### Step 4: User Self-Rates Session
+### Step 4: Report Unknown Words
 
-Ask user to rate their comprehension (1-5):
-1. Complete struggle (understood <30%)
-2. Difficult (understood 30-50%)
-3. Moderate (understood 50-70%)
-4. Good (understood 70-90%)
-5. Excellent (understood >90%)
+Ask user to list words they didn't understand.
 
-### Step 5: Log Session and Update
+For EACH word, ask:
+```
+"{word}" — Options:
+A) YouGlish only (practice pronunciation)
+B) Add to vocab + YouGlish (add to SRS + practice)
+```
 
-1. Open `logs/YYYY-MM-DD.md` and append under "## Listening Practice":
-   ```
-   - Content: {source}, Duration: {n} min, Self-rating: {rating}/5
-   ```
-3. Update SQLite `sessions` table
-4. Update SQLite `skills_progress`:
+Record user's choice for each word.
+
+### Step 5: Evaluate Progression
+
+**Level 2 logic:**
+- If comprehension rating >= 4 for 3 consecutive sessions → suggest level up to 3
+
+**Level 3-4 logic:**
+- If rating >= 4: remain at current level
+- If rating < 3: suggest returning to previous level
+
+### Step 6: Calculate XP
+
+XP based on level and rating:
+
+| Level | Rating 1 | Rating 2 | Rating 3 | Rating 4 | Rating 5 |
+|-------|----------|----------|----------|----------|----------|
+| 1 | 5 | 10 | 15 | 20 | 25 |
+| 2 | 8 | 13 | 18 | 23 | 28 |
+| 3 | 12 | 17 | 22 | 27 | 32 |
+| 4 | 15 | 20 | 25 | 30 | 35 |
+
+### Step 7: Log Session
+
+1. Insert into `listening_progress`:
    ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'listen'
+   INSERT INTO listening_progress 
+   (listen_level, content_type, content_source, content_title, duration_minutes, 
+    used_subtitles, comprehension_rating, unknown_words, unknown_word_count,
+    words_to_youglish, words_to_vocab_youglish, xp_earned)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
    ```
-5. Award XP based on rating:
-   - Rating 1: 5 XP
-   - Rating 2: 10 XP
-   - Rating 3: 15 XP
-   - Rating 4: 20 XP
-   - Rating 5: 30 XP
 
-## Content Sources (from `src/scrapers/`)
+2. Update `skills_progress` for listen skill:
+   ```sql
+   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 
+   WHERE skill_name = 'listen'
+   ```
 
-| Source | Module | Level Range |
-|--------|--------|-------------|
-| BBC Learning English | `src/scrapers/bbc.py` | A1-B1 |
-| YouTube | `src/scrapers/youtube.py` | B1-C2 |
-| General web | `src/scrapers/web.py` | Various |
-| Books | `src/scrapers/books.py` | B1-C2 |
+3. Append to `logs/YYYY-MM-DD.md`:
+   ```
+   ## Listening Practice
+   - Level: {listen_level}
+   - Content: {source} - {title}
+   - Duration: {n} min
+   - Subtiles: {yes/no}
+   - Comprehension: {rating}/5
+   - Words to YouGlish: {count}
+   - Words to Vocab+YouGlish: {count}
+   - XP earned: {n}
+   ```
+
+### Step 8: YouGlish Suggestions
+
+After logging, show:
+```
+🎯 Practice in YouGlish:
+{word1} — {choice A or B}
+{word2} — {choice A or B}
+...
+```
+
+Links format: `https://youglish.com/pronounce/{word}/english`
 
 ## What to Ask User
 
-1. "What content did you practice?" (source + title)
-2. "How long did you practice?" (minutes)
-3. "How well did you understand?" (1-5 rating)
-4. "Any words or phrases you learned?"
+1. "What content did you listen to?" (source + title)
+2. "How long?" (minutes)
+3. "Did you use subtitles?" (for level 2)
+4. "How well did you understand?" (1-5)
+5. "What words did you not understand?" (list)
+6. For each word: "YouGlish only (A) or Add to vocab + YouGlish (B)?"

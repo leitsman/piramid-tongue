@@ -66,9 +66,59 @@ SELECT skill_name, xp, session_count, last_practiced FROM skills_progress
 Display for each skill:
 ```
 🎯 {skill_name}:
-   XP: {xp} / 100 to unlock next
-   Sessions: {count}
-   Last: {date}
+    XP: {xp} / 100 to unlock next
+    Sessions: {count}
+    Last: {date}
+```
+
+### Step 5b: Show Listen Level
+
+Query SQLite for listen level progress:
+```sql
+SELECT listen_level, COUNT(*) as sessions, AVG(comprehension_rating) as avg_rating 
+FROM listening_progress 
+GROUP BY listen_level 
+ORDER BY MAX(session_date) DESC
+LIMIT 1
+```
+
+Display:
+```
+🎧 Listen Level: {n}/4
+   - Level description: {Con subtítulos / Alternando / Sin subtítulos / Podcasts}
+   - Sessions at this level: {count}
+    - Average comprehension: {avg}/5
+```
+
+### Step 5d: Show Vocab Level Progress
+
+Query:
+```sql
+SELECT vocab_level, COUNT(*) as total,
+       SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as integradas
+FROM vocab 
+WHERE technical = 0
+GROUP BY vocab_level
+```
+
+```sql
+SELECT COUNT(*) as technical_count,
+       SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as technical_integradas
+FROM vocab 
+WHERE technical = 1
+```
+
+Display:
+```
+📚 Vocab Progress:
+
+Nivel 1 (Basic): {integrated}/{total} → {pct}%
+Nivel 2 (Intermediate): {integrated}/{total} → {pct}%  
+Nivel 3 (Technical + Extra): {tech_integrated}/{tech_count} words integrated → {pct}%
+
+Status: Nivel 1: {"✅ Ready for level 2" if >=90% or "In progress"}
+        Nivel 2: {"✅ Ready for level 3" if >=90% or "In progress"}
+        Nivel 3: {pct}% completed
 ```
 
 ### Step 6: Show Vicios History

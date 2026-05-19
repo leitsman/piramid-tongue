@@ -50,6 +50,18 @@ Use standard time estimates per skill:
 | write | 30-45 min | ~4-6 weeks |
 | speak | 30-45 min | ~4-6 weeks |
 
+### Vocab Level Progression
+
+```
+Vocab: Nivel 1 (1000 words) → Nivel 2 (1000 words) → Nivel 3 (Technical ∞)
+```
+
+| Vocab Level | Requirement | 
+|-------------|-------------|
+| Nivel 1 (Basic) | 90% of first 1000 words with 100+ reps |
+| Nivel 2 (Intermediate) | 90% of next 1000 words with 100+ reps |
+| Nivel 3 (Technical) | Each word completed at 100 reps, % decreases with new additions |
+
 ### Step 5: Generate Roadmap
 
 Output format:
@@ -111,6 +123,10 @@ vocab (always unlocked)
 | Listener | 100 XP in listen | 3 weeks |
 | Writer | 100 XP in write | 4 weeks |
 | Speaker | 100 XP in speak | 4 weeks |
+| Listener Basic | Level 1 in listen | 1 week |
+| Listener Intermediate | Level 2 in listen | 2 weeks |
+| Listener Advanced | Level 3 in listen | 2 weeks |
+| Podcast Master | Level 4 in listen | 3 weeks |
 | Full Pyramid | All skills 100+ XP | 3-4 months |
 
 ## What to Update

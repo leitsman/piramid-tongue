@@ -107,6 +107,25 @@ CREATE TABLE IF NOT EXISTS weaknesses (
 -- Using ALTER TABLE for existing installations (backward compatibility)
 -- New records will have word='', error_type='', box_level=3, consecutive_correct=0, next_review=NULL
 
+-- Listening practice tracking with 4-level progression
+CREATE TABLE IF NOT EXISTS listening_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    listen_level INTEGER DEFAULT 1 CHECK(listen_level IN (1,2,3,4)),
+    session_date TEXT NOT NULL DEFAULT (date('now')),
+    content_type TEXT NOT NULL CHECK(content_type IN ('video', 'podcast')),
+    content_source TEXT,
+    content_title TEXT,
+    duration_minutes INTEGER,
+    used_subtitles BOOLEAN,  -- solo para nivel 2
+    comprehension_rating INTEGER CHECK(comprehension_rating BETWEEN 1 AND 5),
+    unknown_words TEXT,  -- JSON array de palabras
+    unknown_word_count INTEGER DEFAULT 0,
+    words_to_youglish TEXT,  -- JSON array
+    words_to_vocab_youglish TEXT,  -- JSON array
+    xp_earned INTEGER DEFAULT 0,
+    notes TEXT
+);
+
 -- Platform-specific progress tracking (YouTalk, Duolingo, etc.)
 CREATE TABLE IF NOT EXISTS platform_progress (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,3 +139,8 @@ CREATE TABLE IF NOT EXISTS platform_progress (
     notes TEXT,
     UNIQUE(platform_name, level, unit_number, unit_type, video_number)
 );
+
+-- Vocab 3-level system and repetition counting
+ALTER TABLE vocab ADD COLUMN vocab_level INTEGER DEFAULT 1 CHECK(vocab_level IN (1,2,3));
+ALTER TABLE vocab ADD COLUMN technical INTEGER DEFAULT 0;
+ALTER TABLE vocab ADD COLUMN repetition_count INTEGER DEFAULT 0;

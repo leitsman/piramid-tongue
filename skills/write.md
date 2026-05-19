@@ -50,7 +50,32 @@ Ask user which mode they want:
 2. User translates to English
 3. Discuss differences in structure/idioms
 
-### Step 5: Structural Analysis
+### Step 5: Track Vocabulary Usage for Repetition Count
+
+After user submits their written text (creation or translation):
+
+1. Extract all vocabulary words from the text
+2. Query `vocab` table for matches:
+   ```sql
+   SELECT id, word, repetition_count FROM vocab WHERE status IN ('learning', 'new')
+   ```
+3. For each matched word used in the text:
+   ```sql
+   UPDATE vocab SET repetition_count = repetition_count + 1 WHERE id = ?
+   ```
+4. If any word reached repetition_count >= 100:
+   - Update: `UPDATE vocab SET status = 'acquired' WHERE id = ?`
+   - "🎉 Word '{word}' has been integrated into long-term memory (100+ uses)!"
+5. Display summary:
+   ```
+   📝 Vocabulary Used Today:
+   - Words used: {n}
+   - New repetitions: {n}
+   - Words now fully integrated (100+ reps): {n}
+   - Total integrated: {n}
+   ```
+
+### Step 6: Structural Analysis
 
 After user provides their text (creation or translation):
 
@@ -77,9 +102,9 @@ After user provides their text (creation or translation):
    2. Get detailed explanations of issues
    3. Práctica adaptativa mixta — basada en tus debilidades detectadas
    ```
-8. If user selects option 3, follow **Step 6: Adaptive Mixed Practice**
+8. If user selects option 3, follow **Step 7: Adaptive Mixed Practice**
 
-### Step 6: Adaptive Mixed Practice (Option 3)
+### Step 7: Adaptive Mixed Practice (Option 3)
 
 If user selects option 3:
 
@@ -96,9 +121,9 @@ If user selects option 3:
 8. If no due words:
    - "No words due for review today. Your weaknesses will be practiced when review is due."
 9. Log results in daily log under "## Weakness Review"
-10. After practice, proceed to Step 7 (Vicios Detection)
+10. After practice, proceed to Step 8 (Vicios Detection)
 
-### Step 7: Vicios Detection
+### Step 8: Vicios Detection
 
 1. Read `configs/vicios_patterns.yaml`
 2. Analyze user's written text for patterns:
@@ -110,7 +135,7 @@ If user selects option 3:
    - Vague "thing" (threshold: 0.08)
 3. Report detected vicios with suggestions
 
-### Step 8: Log Session and Update
+### Step 9: Log Session and Update
 
 1. Open `logs/YYYY-MM-DD.md` and append under "## Writing Exercise":
    ```
