@@ -115,20 +115,41 @@ Nivel 3 (Technical): {integrated}/{total} words integrated → {pct}%
 ### Step 6: Log Session
 
 1. Append to `logs/YYYY-MM-DD.md`:
-   ```
+   ```markdown
    ## Vocab Review
-   - Level: {vocab_level}
-   - Words reviewed: {n} (SM-2)
-   - New words added: {n}
-   - XP earned: {n}
+   
+   **Session**: {YYYY-MM-DD HH:MM}
+   
+   **SM-2 Review**:
+   - Words reviewed: {n}
+   - Correct answers: {n}
+   - Incorrect (needs practice): {n}
+   
+   **New Words Added**: {n}
+   
+   **XP Earned**: {n}
+   
+   **Words to Review Later** (struggled with):
+   - {word1} ({reason})
+   - {word2} ({reason})
+   - ...
    ```
 
-2. Insert into `sessions` table
+2. Insert into `sessions` table:
+   ```sql
+   INSERT INTO sessions (date, skill, duration_minutes, xp_earned, words_reviewed, new_words, notes)
+   VALUES (datetime('now'), 'vocab', ?, ?, ?, ?, ?)
+   ```
 
 3. Update `skills_progress`:
    ```sql
    UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'vocab'
    ```
+
+4. Update streak in `configs/profile.yml` if this is the first session of the day:
+   - Read current streak values
+   - Apply same streak update logic as in `new-day.md` Step 3b
+   - Write updated values back
 
 ## SM-2 Algorithm Reference
 

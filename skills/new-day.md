@@ -33,6 +33,26 @@ Start a daily session, check progress, and recommend 2-3 skills to practice.
    SELECT COUNT(*) FROM vocab WHERE status = 'learning' AND (last_review IS NULL OR datetime('now') >= datetime(last_review, '+' || interval || ' days'))
    ```
 
+### Step 3b: Update Streak
+
+Before displaying the streak, update it based on `last_active`:
+
+1. Read `configs/profile.yml` to get current streak values
+2. Get today's date in YYYY-MM-DD format
+3. Compare `last_active` with today:
+   - If `last_active IS NULL` (first time): set `current = 1`, `longest = 1`, `last_active = today`
+   - If `last_active == today`: do NOT change (already counted for today)
+   - If `last_active == yesterday`: increment `current += 1`, update `longest` if needed, `last_active = today`
+   - If `last_active < yesterday` (missed days): reset `current = 1`, `last_active = today`
+4. Write the updated values back to `configs/profile.yml`:
+   ```yaml
+   streak:
+     current: {new_current}
+     longest: {new_longest}
+     last_active: {today}
+   ```
+5. Use the NEW current/longest values for the display in Step 4
+
 ### Step 4: Display Streak and Level
 
 Show user current status:

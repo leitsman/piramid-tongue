@@ -82,20 +82,43 @@ Ask user to rate comprehension (1-5):
 ### Step 5: Log Session and Update
 
 1. Open `logs/YYYY-MM-DD.md` and append under "## Reading Session":
+   ```markdown
+   ## Reading Session
+   
+   **Session**: {YYYY-MM-DD HH:MM}
+   **Source**: {title}
+   **Duration**: {n} min
+   **Self-rating**: {rating}/5
+   
+   **New Words / Phrases**: 
+   - {word1}
+   - {word2}
+   
+   **XP Earned**: {n}
    ```
-   - Source: {title}, Duration: {n} min, Self-rating: {rating}/5, New words: {words}
-   ```
-3. Update SQLite `sessions` table
-4. Update SQLite `skills_progress`:
+
+2. Update SQLite `sessions` table.
+
+3. Update SQLite `skills_progress`:
    ```sql
    UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'read'
    ```
-5. Award XP based on rating:
+
+4. Award XP based on rating:
    - Rating 1: 5 XP
    - Rating 2: 10 XP
    - Rating 3: 15 XP
    - Rating 4: 20 XP
    - Rating 5: 30 XP
+
+5. Update streak in `configs/profile.yml` if this is the first session of the day:
+   - Read current streak values from `configs/profile.yml`
+   - Apply same streak logic as in `new-day.md` Step 3b:
+     - If `last_active IS NULL`: set `current = 1`, `longest = 1`, `last_active = today`
+     - If `last_active == today`: no change (already counted)
+     - If `last_active == yesterday`: increment `current += 1`, update `longest` if needed, `last_active = today`
+     - If `last_active < yesterday` (missed days): reset `current = 1`, `last_active = today`
+   - Write updated values back to `configs/profile.yml`
 
 ## Content Sources (from `src/scrapers/`)
 

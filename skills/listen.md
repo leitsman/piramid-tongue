@@ -122,17 +122,31 @@ XP based on level and rating:
    ```
 
 3. Append to `logs/YYYY-MM-DD.md`:
-   ```
+   ```markdown
    ## Listening Practice
-   - Level: {listen_level}
-   - Content: {source} - {title}
-   - Duration: {n} min
-   - Subtiles: {yes/no}
-   - Comprehension: {rating}/5
-   - Words to YouGlish: {count}
-   - Words to Vocab+YouGlish: {count}
-   - XP earned: {n}
+   
+   **Session**: {YYYY-MM-DD HH:MM}
+   **Level**: {listen_level}
+   **Content**: {source} - {title}
+   **Duration**: {n} min
+   **Subtitles**: {yes/no}
+   **Comprehension**: {rating}/5
+   
+   **Unknown Words**: {count}
+   - YouGlish only: {n} words
+   - Added to Vocab + YouGlish: {n} words
+   
+   **XP Earned**: {n}
    ```
+
+4. Update streak in `configs/profile.yml` if this is the first session of the day:
+   - Read current streak values from `configs/profile.yml`
+   - Apply same streak logic as in `new-day.md` Step 3b:
+     - If `last_active IS NULL`: set `current = 1`, `longest = 1`, `last_active = today`
+     - If `last_active == today`: no change (already counted)
+     - If `last_active == yesterday`: increment `current += 1`, update `longest` if needed, `last_active = today`
+     - If `last_active < yesterday` (missed days): reset `current = 1`, `last_active = today`
+   - Write updated values back to `configs/profile.yml`
 
 ### Step 8: YouGlish Suggestions
 

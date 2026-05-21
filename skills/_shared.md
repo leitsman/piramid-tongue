@@ -20,8 +20,10 @@
 
 ## Data Contract (CRITICAL)
 
-**User Layer (NEVER auto-updated by AI unless explicitly requested):**
+**User Layer (minimal AI writes):**
 - `configs/profile.yml` — identity, level, objectives, streak, platforms
+  - ⚠️ Streak (`current`, `longest`, `last_active`) IS auto-updated by AI on `/pt new-day`
+  - Other fields: AI only updates when user explicitly requests changes
 - `configs/vicios_patterns.yaml` — custom vice patterns
 - `data/progress.db` — SQLite database (vocabulary, skills, sessions)
 - `logs/YYYY-MM-DD.md` — daily markdown session logs

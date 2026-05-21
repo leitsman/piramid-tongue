@@ -71,18 +71,41 @@ Ask user to rate their speaking (1-5):
 ### Step 5: Log Session and Update
 
 1. Open `logs/YYYY-MM-DD.md` and append under "## Speaking Drill":
+   ```markdown
+   ## Speaking Drill
+   
+   **Session**: {YYYY-MM-DD HH:MM}
+   **Mode**: {mode}
+   **Duration**: {n} min
+   **Self-rating**: {rating}/5
+   
+   **Challenging Words/Sounds**:
+   - {word1}
+   - {word2}
+   
+   **XP Earned**: {n}
    ```
-   - Mode: {mode}, Duration: {n} min, Self-rating: {rating}/5
-   ```
-3. Update SQLite `sessions` table
-4. Update SQLite `skills_progress`:
+
+2. Update SQLite `sessions` table.
+
+3. Update SQLite `skills_progress`:
    ```sql
    UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'speak'
    ```
-5. Award XP:
+
+4. Award XP:
    - Read-aloud: 10-20 XP based on self-rating
    - Shadowing: 15-25 XP based on self-rating
    - Tandem: 20-30 XP based on self-rating
+
+5. Update streak in `configs/profile.yml` if this is the first session of the day:
+   - Read current streak values from `configs/profile.yml`
+   - Apply same streak logic as in `new-day.md` Step 3b:
+     - If `last_active IS NULL`: set `current = 1`, `longest = 1`, `last_active = today`
+     - If `last_active == today`: no change (already counted)
+     - If `last_active == yesterday`: increment `current += 1`, update `longest` if needed, `last_active = today`
+     - If `last_active < yesterday` (missed days): reset `current = 1`, `last_active = today`
+   - Write updated values back to `configs/profile.yml`
 
 ## Shadowing Sources
 
