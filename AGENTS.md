@@ -59,8 +59,10 @@ When the user says `/pt <command>`, I execute it **DIRECTLY**:
 
 1. **I read** the corresponding `skills/<command>.md` file
 2. **I follow** the instructions IN that file
-3. **I update** `configs/profile.yml` and `data/progress.db` as needed
-4. **I NEVER spawn a Python process** or run `python -m src.cli.main`
+3. **I use `sqlite3 data/progress.db "SELECT..."`** for database queries
+4. **I read `src/test_questions.py`** for question banks and SHA256 verification
+5. **I NEVER spawn a Python process** or run `python -c` or `python script.py`
+6. **I update** `configs/profile.yml` and `data/progress.db` as needed
 
 The AI IS the executor. The `skills/*.md` files contain instructions that I (the AI) carry out.
 
@@ -69,11 +71,13 @@ The AI IS the executor. The `skills/*.md` files contain instructions that I (the
 AI agents read `skills/*.md` files to execute commands. When user says `/pt <command>`:
 
 1. AI reads `skills/<command>.md` and `skills/_shared.md`
-2. AI reads user data from `configs/profile.yml` and database
-3. AI asks user for input when required
-4. AI logs results to `logs/YYYY-MM-DD.md`
-5. AI updates SQLite database
-6. AI shows user results and next steps
+2. AI reads user data from `configs/profile.yml` and queries database via `sqlite3 data/progress.db "SELECT..."`
+3. AI reads `src/test_questions.py` for question banks, MICRO_TESTS, and EXERCISE_TEMPLATES
+4. AI asks user for input when required
+5. AI logs results to `logs/YYYY-MM-DD.md`
+6. AI updates SQLite database via `sqlite3 data/progress.db` bash commands
+7. **AI NEVER spawns a Python process**
+8. AI shows user results and next steps
 
 ---
 

@@ -17,13 +17,10 @@ Reading practice with CEFR-appropriate texts and comprehension exercises.
 
 **SKILL: Load `skills/_shared/micro-test.md` before starting.**
 
-1. Import MICRO_TESTS from `src/test_questions.py`:
-   ```python
-   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
-   ```
+1. Read `src/test_questions.py` y extrae `MICRO_TESTS["read"][cefr_level]`
 2. Check if read skill has < 100 XP in `skills_progress` table:
-   ```sql
-   SELECT xp FROM skills_progress WHERE skill_name = 'read'
+   ```bash
+   sqlite3 data/progress.db "SELECT xp FROM skills_progress WHERE skill_name = 'read';"
    ```
 3. If (read_xp < 100) OR (user says "test me" / "ponme a prueba"):
    a. Select 4 random questions from `MICRO_TESTS["read"][cefr_level]`
@@ -100,8 +97,8 @@ Ask user to rate comprehension (1-5):
 2. Update SQLite `sessions` table.
 
 3. Update SQLite `skills_progress`:
-   ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'read'
+   ```bash
+   sqlite3 data/progress.db "UPDATE skills_progress SET xp = xp + ${xp}, session_count = session_count + 1 WHERE skill_name = 'read';"
    ```
 
 4. Award XP based on rating:
@@ -120,13 +117,13 @@ Ask user to rate comprehension (1-5):
      - If `last_active < yesterday` (missed days): reset `current = 1`, `last_active = today`
    - Write updated values back to `configs/profile.yml`
 
-## Content Sources (from `src/scrapers/`)
+## Content Sources
 
-| Source | Module | Level Range |
-|--------|--------|-------------|
-| BBC Learning English | `src/scrapers/bbc.py` | A1-B1 |
-| Web articles | `src/scrapers/web.py` | B1-C2 |
-| Books | `src/scrapers/books.py` | B1-C2 |
+| Source | Level Range |
+|--------|-------------|
+| BBC Learning English | A1-B1 |
+| Web articles | B1-C2 |
+| Books | B1-C2 |
 
 ## What to Ask User
 

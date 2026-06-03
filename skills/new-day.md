@@ -23,15 +23,12 @@ Start a daily session, check progress, and recommend 2-3 skills to practice.
 
 ### Step 3: Read SQLite Data for Skill Levels
 
-1. Initialize DB from `src/db/__init__.py` → DB class
-2. Query `skills_progress` table for all skills:
-   ```sql
-   SELECT skill_name, level, xp, session_count, last_practiced FROM skills_progress
-   ```
-3. Query `vocab` table for words due for review:
-   ```sql
-   SELECT COUNT(*) FROM vocab WHERE status = 'learning' AND (last_review IS NULL OR datetime('now') >= datetime(last_review, '+' || interval || ' days'))
-   ```
+Use `sqlite3` via bash to query the database:
+
+```bash
+sqlite3 data/progress.db "SELECT skill_name, level, xp, session_count, last_practiced FROM skills_progress;"
+sqlite3 data/progress.db "SELECT COUNT(*) FROM vocab WHERE status = 'learning' AND (last_review IS NULL OR datetime('now') >= datetime(last_review, '+' || interval || ' days'));"
+```
 
 ### Step 3b: Update Streak
 
@@ -77,29 +74,44 @@ Analyze the response:
 
 If user says "nothing" / "todo bien" / "skip" / "omitir" → proceed with normal recommendations.
 
-### Step 5b: Weakness Review (NEW — Between checks and recommendations)
+### Step 5b: Weakness Review (Between checks and recommendations)
 
-1. Import `LeitnerEngine` from `src/core/leitner.py`
-2. Import `generate_exercises_for_word` from `src/test_questions.py`
-3. Initialize `LeitnerEngine` with DB
-4. Query due words: `engine.get_due_reviews(limit=5)`
-5. If no due words: skip to Step 6 (no interruption to flow)
-6. If due words exist: present "Quick review before starting:"
-   - For each due word, generate 2 exercises via `generate_exercises_for_word()`
+1. Read `src/test_questions.py` y extrae el dict `EXERCISE_TEMPLATES` para generar ejercicios
+2. Query due words from `weaknesses` table using sqlite3:
+   ```bash
+   sqlite3 data/progress.db "SELECT id, word, error_type, context_example, box_level, consecutive_correct FROM weaknesses WHERE status = 'active' AND box_level < 5 AND (next_review IS NULL OR datetime(next_review) <= datetime('now')) ORDER BY box_level ASC, next_review ASC LIMIT 5;"
+   ```
+3. If no due words: skip to Step 6 (no interruption to flow)
+4. If due words exist: present "Quick review before starting:"
+   - For each due word, generate 2 exercises usando los templates en `EXERCISE_TEMPLATES[error_type]` de `src/test_questions.py`
    - Present mixed (shuffled) exercises
    - Process user's answers
-   - Update boxes via `engine.update_box()` — correct=+1, fail minor=-1, fail major=-2
+   - Update boxes via sqlite3 — correct=+1, fail minor=-1, fail major=-2
    - Log results in daily log under "## Weakness Review"
-7. If score < 50%, offer retry with new exercises
-8. If >= 50%, continue to recommendations
+5. If score < 50%, offer retry with new exercises
+6. If >= 50%, continue to recommendations
+
+**Leitner Box Intervals**:
+- Box 1: 1 day interval
+- Box 2: 2 days
+- Box 3: 4 days
+- Box 4: 7 days
+- Box 5: 14 days
+- Correct answer: advance 1 box (max 5)
+- Minor failure: drop 1 box (min 1)
+- Major failure: drop 2 boxes (min 1)
+- Box 5 + 3 consecutive correct: status = 'mastered'
 
 ### Step 6: Platform-Pyramid Gap Display
 
 If user has platforms configured in profile.yml:
-1. Import `PyramidState` from `src/core/pyramid_engine.py`
-2. Build pyramid_skills dict from DB query
-3. Run `pyramid_state.get_gap_report(profile_data, pyramid_skills)`
-4. If gaps found (gaps list not empty), show:
+1. Query all skill XP from `skills_progress`:
+   ```bash
+   sqlite3 data/progress.db "SELECT skill_name, xp FROM skills_progress;"
+   ```
+2. Compare each platform's estimated CEFR level (from `platform_level_to_cefr`) against the user's actual skill XP:
+   - If platform level suggests higher proficiency than the user's lowest skill XP → gap detected
+3. If gaps found, show:
    ```
    ⚠️ Gap Detected:
    
@@ -108,11 +120,20 @@ If user has platforms configured in profile.yml:
    
    Today I recommend focusing on: [affected skill]
    ```
-5. If no gaps or platforms empty: skip this section
+4. If no gaps or platforms empty: skip this section
 
 ### Step 8: Calculate Skills Needing Attention
 
-Use pyramid engine from `src/core/pyramid_engine.py`:
+Use the pyramid dependency rules (inline — no Python module needed):
+
+**Pyramid Dependencies**:
+```
+vocab: (unlocked) — requires 0 XP
+read: requires vocab (100 XP)
+listen: requires read (100 XP)
+write: requires listen (100 XP)
+speak: requires write (100 XP)
+```
 
 1. **Priority calculation** (with gap influence):
    - Skills with gaps (from Step 6) get highest priority

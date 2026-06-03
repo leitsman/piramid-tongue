@@ -88,29 +88,27 @@ When you want to improve a skill: focus on that skill + its dependencies
 
 Patterns are configured in `configs/vicios_patterns.yaml`.
 
-## Key Implementation Files
+## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/core/config.py` | Config class for loading profile settings |
-| `src/core/pyramid_engine.py` | PyramidState class with skill dependencies |
-| `src/core/spaced_repetition.py` | SM-2 algorithm implementation |
-| `src/core/leitner.py` | Leitner box system for weakness tracking |
-| `src/db/__init__.py` | DB class for SQLite operations |
-| `src/db/schema.sql` | Database schema |
-| `src/logs/writer.py` | LogWriter class (utility — AI writes logs directly to markdown) |
-| `src/test_questions.py` | Hidden level test with SHA256-hashed answers |
-| `src/analysis/structural.py` | Rule-based writing analysis |
-| `src/platforms/gap_detector.py` | Platform-vs-skill gap detection |
+| `src/test_questions.py` | Level test questions with SHA256-hashed answers + MICRO_TESTS + EXERCISE_TEMPLATES |
+| `data/schema.sql` | Database schema |
+| `configs/profile.yml` | User profile, level, objectives, streak, platforms |
+| `configs/vicios_patterns.yaml` | Vicios detection regex patterns |
+| `skills/` | AI-executed skill instruction files |
 
 ## AI Execution Workflow
 
 1. User triggers `/pt <command>`
 2. AI reads `skills/<command>.md` and `skills/_shared.md`
-3. AI reads user data from `configs/profile.yml` and database
+3. AI reads user data from `configs/profile.yml` and database via sqlite3:
+   ```bash
+   sqlite3 data/progress.db "SELECT ..."
+   ```
 4. AI asks user for input when required
 5. AI logs results to `logs/YYYY-MM-DD.md`
-6. AI updates SQLite database
+6. AI updates SQLite database via sqlite3 bash commands
 7. AI shows user results and next steps
 
 ## Onboarding Flow (First Run)

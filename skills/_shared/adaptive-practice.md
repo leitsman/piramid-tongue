@@ -12,18 +12,21 @@
 ## Flow
 
 ### Step 1: Check Due Words (Leitner)
-1. Import `LeitnerEngine` from `src/core/leitner.py`
-2. Import `generate_exercises_for_word` from `src/test_questions.py`
-3. Initialize `LeitnerEngine` with DB path
-4. Call `engine.get_due_reviews(limit=5)` to get words due for review
-5. If no due words and user didn't request practice → skip this flow
-6. If due words exist → present as "Quick review before starting:"
+1. Read `src/test_questions.py` y extrae `EXERCISE_TEMPLATES` para generar ejercicios por error_type
+2. Query due words from weaknesses table via sqlite3:
+   ```bash
+   sqlite3 data/progress.db "SELECT id, word, error_type, context_example, box_level, consecutive_correct FROM weaknesses WHERE status = 'active' AND box_level < 5 AND (next_review IS NULL OR datetime(next_review) <= datetime('now')) ORDER BY box_level ASC, next_review ASC LIMIT 5;"
+   ```
+3. If no due words and user didn't request practice → skip this flow
+4. If due words exist → present as "Quick review before starting:"
 
 ### Step 2: Generate Exercises Per Word
 For each due word:
-1. Call `generate_exercises_for_word(word, error_type, count=2)`
-2. This creates 2 exercises per word using templates
-3. Collect all exercises into a single list
+1. Read `EXERCISE_TEMPLATES[error_type]` from `src/test_questions.py`
+2. Select 2 random templates from the list
+3. Each template is: `(question_template, correct_answer, [distractors])`
+4. Build a list with 4 options: correct_answer + 3 distractors (shuffled)
+5. Collect all exercises into a single list
 
 ### Step 3: Present Mixed Exercises (SHUFFLED)
 1. **SKILL: Load `skills/_shared/exercise-design.md`** for format guidelines
@@ -50,13 +53,21 @@ After user answers:
 
 ### Step 5: Update Boxes
 After all exercises:
-1. For each answer: call `engine.update_box(weakness_id, correct, severity)`
-   - correct=True → box advances +1
-   - correct=False, minor severity → box drops -1
-   - correct=False, major severity → box drops -2
+1. For each answer, determine box movement:
+   - correct=True → +1 box (max 5), increment consecutive_correct
+   - correct=False, minor severity → -1 box (min 1), reset consecutive_correct
+   - correct=False, major severity → -2 boxes (min 1), reset consecutive_correct
 2. Severity determination:
    - If user's wrong answer was a plausible distractor → "minor"
    - If user's answer shows fundamental misunderstanding → "major"
+3. Update via sqlite3:
+   ```bash
+   # Correct answer
+   sqlite3 data/progress.db "UPDATE weaknesses SET box_level = MIN(box_level + 1, 5), consecutive_correct = consecutive_correct + 1, last_practiced = datetime('now'), next_review = date('now', '+${interval} days') WHERE id = ${id};"
+   # Wrong answer
+   sqlite3 data/progress.db "UPDATE weaknesses SET box_level = MAX(box_level - ${drop}, 1), consecutive_correct = 0, last_practiced = datetime('now'), next_review = date('now', '+1 days') WHERE id = ${id};"
+   ```
+   **Leitner intervals by box**: Box 1=1d, Box 2=2d, Box 3=4d, Box 4=7d, Box 5=14d
 
 ### Step 6: Retry Logic
 After session:
@@ -70,9 +81,12 @@ After session:
    - Continue to next step
 
 ### Step 7: Update Database
-- Box levels are already updated via `engine.update_box()`
+- Box levels are already updated via sqlite3 (Step 5)
 - Log results in daily log under "## Weakness Review"
-- If box reaches 5 with consecutive_correct >= 3 → status = 'mastered'
+- Mark as mastered if box 5 + 3 consecutive correct:
+  ```bash
+  sqlite3 data/progress.db "UPDATE weaknesses SET status = 'mastered' WHERE id = ${id} AND box_level >= 5 AND consecutive_correct >= 3;"
+  ```
 
 ## Key Differences from Old Flow
 
@@ -88,7 +102,8 @@ After session:
 - `skills/write.md`: After structural analysis → auto-detects and saves to weakness DB
 - `skills/new-day.md`: Between checks and recommendations → presents due words for review
 
-## Deprecated
+## Exercise Templates Source
 
-The old `get_mixed_exercise_set()` function and MIXED_EXERCISE_BANKS are deprecated.
-Use `generate_exercises_for_word()` for all new exercise generation.
+Use the `EXERCISE_TEMPLATES` dict from `src/test_questions.py` to generate exercises.
+Each template has format: `(question_template, correct_answer, [distractors])`.
+The AI reads the file directly (no Python execution).

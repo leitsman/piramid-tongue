@@ -48,9 +48,13 @@ To run the test:
 
    b. Wait for user's answer (A, B, C, or D)
 
-   c. Convert letter to answer and verify using `check_answer()`
+    c. Convert letter to answer and verify SHA256 hash via bash:
+       ```bash
+       echo -n "${answer}" | sha256sum
+       ```
+       Compare the result with `hashed_answer` from `LEVEL_QUESTIONS`
 
-   d. Track score
+    d. Track score
 
 3. If score >= 60% (3/5 correct):
    - Move to next level

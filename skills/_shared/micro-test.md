@@ -17,9 +17,9 @@
 
 ## Question Source
 
-- Use `MICRO_TESTS` dict from `src/test_questions.py`
-- Import: `from src.test_questions import MICRO_TESTS`
+- Read `src/test_questions.py` y extrae el dict `MICRO_TESTS`
 - Select 4 random questions from `MICRO_TESTS[skill_name][cefr_level]`
+- Each entry: `(question_text, [option_a, option_b, option_c, option_d], correct_index)`
 - Select 2 bonus questions from the **next** CEFR level (if 4/4 correct)
 
 ## Results Interpretation
@@ -74,7 +74,10 @@ After showing results but BEFORE proceeding to main session:
 
 1. For each INCORRECT answer in the micro-test:
    a. Map the question to a category using `QUESTION_CATEGORIES` from `src/test_questions.py`
-   b. Call `DB.add_weakness(category, source='micro_test')` or increment fail_count if exists
+   b. Save weakness via sqlite3:
+      ```bash
+      sqlite3 data/progress.db "INSERT INTO weaknesses (category, description, source, fail_count) VALUES ('${category}', '${description}', 'micro_test', 1) ON CONFLICT(category) DO UPDATE SET fail_count = fail_count + 1, last_practiced = datetime('now') WHERE status = 'active';"
+      ```
    
 2. If score < 3/4, note: "Weaknesses saved. You'll get adaptive practice for these areas."
 
@@ -96,8 +99,11 @@ Each skill file should include:
 
 **SKILL: Load `skills/_shared/micro-test.md` before starting.**
 
-1. Read `src/test_questions.py` to get the MICRO_TESTS dictionary
-2. Check if this skill has < 100 XP
+1. Read `src/test_questions.py` y extrae MICRO_TESTS["{skill}"][level]
+2. Check if this skill has < 100 XP:
+   ```bash
+   sqlite3 data/progress.db "SELECT xp FROM skills_progress WHERE skill_name = '{skill}';"
+   ```
 3. If (skill_xp < 100) OR (user says "test me"):
    a. Get user's CEFR level from profile.yml
    b. Select 4 random questions from MICRO_TESTS["{skill}"][level]

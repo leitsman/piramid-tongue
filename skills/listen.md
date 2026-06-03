@@ -21,13 +21,13 @@ Listening practice with 4 progressive levels and YouGlish integration for unknow
 
 1. Read `configs/profile.yml` for CEFR level
 2. Query `listening_progress` table for current listen_level:
-   ```sql
-   SELECT listen_level FROM listening_progress ORDER BY id DESC LIMIT 1
+   ```bash
+   sqlite3 data/progress.db "SELECT listen_level FROM listening_progress ORDER BY id DESC LIMIT 1;"
    ```
    - If no records, default to level 1
 3. Get last session info for level 2 logic:
-   ```sql
-   SELECT * FROM listening_progress WHERE listen_level = 2 ORDER BY id DESC LIMIT 1
+   ```bash
+   sqlite3 data/progress.db "SELECT * FROM listening_progress WHERE listen_level = 2 ORDER BY id DESC LIMIT 1;"
    ```
 
 ### Step 2: Suggest Content Based on Level
@@ -107,18 +107,13 @@ XP based on level and rating:
 ### Step 7: Log Session
 
 1. Insert into `listening_progress`:
-   ```sql
-   INSERT INTO listening_progress 
-   (listen_level, content_type, content_source, content_title, duration_minutes, 
-    used_subtitles, comprehension_rating, unknown_words, unknown_word_count,
-    words_to_youglish, words_to_vocab_youglish, xp_earned)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+   ```bash
+   sqlite3 data/progress.db "INSERT INTO listening_progress (listen_level, content_type, content_source, content_title, duration_minutes, used_subtitles, comprehension_rating, unknown_words, unknown_word_count, words_to_youglish, words_to_vocab_youglish, xp_earned) VALUES (${listen_level}, '${content_type}', '${source}', '${title}', ${duration}, ${subtitles}, ${rating}, '${unknown_words}', ${unknown_count}, '${youglish}', '${vocab_youglish}', ${xp});"
    ```
 
 2. Update `skills_progress` for listen skill:
-   ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 
-   WHERE skill_name = 'listen'
+   ```bash
+   sqlite3 data/progress.db "UPDATE skills_progress SET xp = xp + ${xp}, session_count = session_count + 1 WHERE skill_name = 'listen';"
    ```
 
 3. Append to `logs/YYYY-MM-DD.md`:

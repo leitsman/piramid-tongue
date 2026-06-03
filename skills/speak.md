@@ -17,13 +17,10 @@ Speaking practice with read-aloud, shadowing, and tandem reminders.
 
 **SKILL: Load `skills/_shared/micro-test.md` before starting.**
 
-1. Import MICRO_TESTS from `src/test_questions.py`:
-   ```python
-   from src.test_questions import MICRO_TESTS, get_micro_tests_for_skill, get_bonus_questions_for_level
-   ```
+1. Read `src/test_questions.py` y extrae `MICRO_TESTS["speak"][cefr_level]`
 2. Check if speak skill has < 100 XP in `skills_progress` table:
-   ```sql
-   SELECT xp FROM skills_progress WHERE skill_name = 'speak'
+   ```bash
+   sqlite3 data/progress.db "SELECT xp FROM skills_progress WHERE skill_name = 'speak';"
    ```
 3. If (speak_xp < 100) OR (user says "test me" / "ponme a prueba"):
    a. Select 4 random questions from `MICRO_TESTS["speak"][cefr_level]`
@@ -89,8 +86,8 @@ Ask user to rate their speaking (1-5):
 2. Update SQLite `sessions` table.
 
 3. Update SQLite `skills_progress`:
-   ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'speak'
+   ```bash
+   sqlite3 data/progress.db "UPDATE skills_progress SET xp = xp + ${xp}, session_count = session_count + 1 WHERE skill_name = 'speak';"
    ```
 
 4. Award XP:

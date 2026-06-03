@@ -17,8 +17,11 @@ Writing practice with 3 modes: transcription, creation, translation. Includes st
 
 **SKILL: Load `skills/_shared/micro-test.md` before starting.**
 
-1. Import MICRO_TESTS from `src/test_questions.py`
-2. Check if 'write' skill has < 100 XP in skills_progress table
+1. Read `src/test_questions.py` y extrae `MICRO_TESTS["write"][level]`
+2. Check if 'write' skill has < 100 XP in skills_progress table:
+   ```bash
+   sqlite3 data/progress.db "SELECT xp FROM skills_progress WHERE skill_name = 'write';"
+   ```
 3. If (skill_xp < 100) OR (user says "test me"):
    a. Get 4 random questions from `MICRO_TESTS["write"][level]`
    b. Present questions per _shared/micro-test.md
@@ -60,11 +63,11 @@ After user submits their written text (creation or translation):
    SELECT id, word, repetition_count FROM vocab WHERE status IN ('learning', 'new')
    ```
 3. For each matched word used in the text:
-   ```sql
-   UPDATE vocab SET repetition_count = repetition_count + 1 WHERE id = ?
+   ```bash
+   sqlite3 data/progress.db "UPDATE vocab SET repetition_count = repetition_count + 1 WHERE id = ${word_id};"
    ```
 4. If any word reached repetition_count >= 100:
-   - Update: `UPDATE vocab SET status = 'acquired' WHERE id = ?`
+   - Update: `sqlite3 data/progress.db "UPDATE vocab SET status = 'acquired' WHERE id = ${word_id};"`
    - "🎉 Word '{word}' has been integrated into long-term memory (100+ uses)!"
 5. Display summary:
    ```
@@ -79,10 +82,18 @@ After user submits their written text (creation or translation):
 
 After user provides their text (creation or translation):
 
-1. Import `StructuralAnalyzer` from `src/analysis/structural.py`
-2. Import `DB` from `src/db/__init__.py`
-3. Run `analyzer.analyze(text)` on the user's written text
-4. Display results in natural language:
+Apply structural analysis patterns **directly** (no Python module):
+
+1. **Article overuse**: Count occurrences of `\bthe\b` vs total tokens. Flag if > 12%
+2. **"very + adj"**: Count occurrences of `\bvery\s+\w+`
+3. **"in order to"**: Count occurrences of `\bin\s+order\s+to\b`
+4. **"a lot of"**: Count occurrences of `\b(a|an)\s+lot\s+of\b`
+5. **"actually" filler**: Count `\bactually\b`
+6. **Vague "thing"**: Count `\bthing\b`
+7. **Run-on sentences**: Count sentences with > 3 conjunctions
+8. **Sentence fragments**: Detect very short sentences without proper subject
+
+Display results in natural language:
    ```
    📝 Structural Analysis:
    - Score: X/100
@@ -90,9 +101,12 @@ After user provides their text (creation or translation):
    - Main areas to improve: [summary]
    ```
 5. If issues found, log in daily log under `## Structural Analysis`
-6. **Auto-detection flow** (NEW — saves weaknesses silently):
-   - For each detected issue with `issue.word` and `issue.error_type`:
-     - Call `DB.add_word_weakness(word, error_type, context_example, source='structural_analysis')`
+6. **Auto-detection flow** (saves weaknesses silently):
+   - For each detected issue with a specific word and error type:
+     - Insert word-specific weakness via sqlite3:
+       ```bash
+       sqlite3 data/progress.db "INSERT INTO weaknesses (word, error_type, context_example, source, box_level, consecutive_correct, next_review) VALUES ('${word}', '${error_type}', '${context}', 'structural_analysis', 1, 0, date('now'));"
+       ```
      - Log to daily log: `"Auto-detected weakness: {word} ({error_type})"`
    - **No confirmation prompt** — auto-saves silently
 7. Ask user what to do next:
@@ -110,18 +124,31 @@ If user selects option 3:
 
 1. **SKILL: Load `skills/_shared/adaptive-practice.md` before starting.**
 2. **SKILL: Load `skills/_shared/exercise-design.md`** for exercise format guidelines.
-3. Import `LeitnerEngine` from `src/core/leitner.py`
-4. Import `generate_exercises_for_word` from `src/test_questions.py`
-5. Initialize `LeitnerEngine` with DB
-6. Check for due reviews: `engine.get_due_reviews(limit=5)`
-7. If due words found:
-   - Generate 2 exercises per word: `generate_exercises_for_word(word, error_type, count=2)`
+3. Check for due reviews from weaknesses table:
+   ```bash
+   sqlite3 data/progress.db "SELECT id, word, error_type, context_example, box_level, consecutive_correct FROM weaknesses WHERE status = 'active' AND box_level < 5 AND (next_review IS NULL OR datetime(next_review) <= datetime('now')) ORDER BY box_level ASC, next_review ASC LIMIT 5;"
+   ```
+4. If due words found:
+   - Read `src/test_questions.py`, extrae `EXERCISE_TEMPLATES[error_type]`
+   - Generate 2 exercises per word usando los templates
    - Present mixed (shuffled) exercises following exercise-design.md
-   - Update boxes via `engine.update_box()` after each answer
-8. If no due words:
+   - Update boxes via sqlite3 after each answer
+5. If no due words:
    - "No words due for review today. Your weaknesses will be practiced when review is due."
-9. Log results in daily log under "## Weakness Review"
-10. After practice, proceed to Step 8 (Vicios Detection)
+6. Log results in daily log under "## Weakness Review"
+7. After practice, proceed to Step 8 (Vicios Detection)
+
+**Leitner Box Updates (via sqlite3):**
+```bash
+# Correct answer (+1 box, max 5, increment consecutive_correct)
+sqlite3 data/progress.db "UPDATE weaknesses SET box_level = MIN(box_level + 1, 5), consecutive_correct = consecutive_correct + 1, last_practiced = datetime('now'), next_review = date('now', '+${interval} days') WHERE id = ${id};"
+# Wrong answer minor (-1 box, min 1, reset consecutive)
+sqlite3 data/progress.db "UPDATE weaknesses SET box_level = MAX(box_level - 1, 1), consecutive_correct = 0, last_practiced = datetime('now'), next_review = date('now', '+1 days') WHERE id = ${id};"
+# Wrong answer major (-2 boxes, min 1, reset consecutive)
+sqlite3 data/progress.db "UPDATE weaknesses SET box_level = MAX(box_level - 2, 1), consecutive_correct = 0, last_practiced = datetime('now'), next_review = date('now', '+1 days') WHERE id = ${id};"
+# If box 5 + 3 consecutive correct → mastered
+sqlite3 data/progress.db "UPDATE weaknesses SET status = 'mastered' WHERE id = ${id} AND box_level >= 5 AND consecutive_correct >= 3;"
+```
 
 ### Step 8: Vicios Detection
 
@@ -156,8 +183,8 @@ If user selects option 3:
 2. Update SQLite `sessions` table.
 
 3. Update SQLite `skills_progress`:
-   ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'write'
+   ```bash
+   sqlite3 data/progress.db "UPDATE skills_progress SET xp = xp + ${xp_earned}, session_count = session_count + 1 WHERE skill_name = 'write';"
    ```
 
 4. Award XP:

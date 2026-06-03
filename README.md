@@ -53,19 +53,14 @@ You say: /pt init
 
 ## Quick Start
 
-### 1. Clone and install dependencies
+### 1. Clone the repo
 
 ```bash
 git clone <your-repo>
 cd piramid-tongue
-pip install -r requirements.txt
 ```
 
-### 2. Check setup
-
-```bash
-python -m pytest --tb=short -q
-```
+No dependencies needed — the AI executes everything directly.
 
 ### 3. Start learning
 
@@ -198,13 +193,7 @@ piramid-tongue/
 │   ├── roadmap.md            # Next steps
 │   └── vicios.md             # Vice pattern analysis
 ├── src/
-│   ├── platforms/            # Platform registry & gap detection
-│   ├── analysis/             # Structural writing analysis
-│   ├── core/                 # Pyramid engine, SM-2, CEFR
-│   ├── db/                   # SQLite schema and CRUD
-│   ├── scrapers/             # BBC, YouTube, Books, Web
-│   ├── logs/                 # Daily markdown logs
-│   └── test_questions.py     # Level test + micro-test question bank
+│   └── test_questions.py     # Level test + micro-test question bank (SHA256)
 ├── tests/                    # Test suite
 ├── logs/                     # Daily session logs (gitignored)
 ├── data/                     # SQLite database (gitignored)
@@ -221,11 +210,10 @@ piramid-tongue/
 
 ## Tech Stack
 
-- **Python**: Core modules (pyramid engine, SM-2, structural analysis, gap detection)
-- **Persistence**: SQLite + Markdown
-- **Scraping**: BeautifulSoup4 + requests + yt-dlp
-- **Testing**: pytest
-- **Algorithms**: SM-2 (spaced repetition), CEFR detection, structural analysis, gap detection
+- **SQLite**: Persistence via `sqlite3` bash commands
+- **SM-2 + Leitner**: Algorithms executed directly by AI (documented in skills)
+- **Regex-based analysis**: Structural writing analysis done by AI directly
+- **No Python runtime**: All execution is AI-native
 
 ## License
 

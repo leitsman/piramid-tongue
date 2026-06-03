@@ -11,18 +11,25 @@ Show next steps with dependencies, time estimates, and learning path.
 ### Step 1: Load User Data
 
 1. Read `configs/profile.yml` for level and objectives
-2. Initialize DB from `src/db/__init__.py`
-3. Query skills_progress for all skills
+2. Query skills_progress for all skills via sqlite3:
+   ```bash
+   sqlite3 data/progress.db "SELECT skill_name, xp, session_count, last_practiced FROM skills_progress;"
+   ```
 
 ### Step 2: Calculate Pyramid State
 
-Use `src/core/pyramid_engine.py` PyramidState:
+Use the pyramid dependency rules (inline):
 
-```python
-pyramid = PyramidState()
-# Load from DB...
-# Calculate which skills are unlocked/blocked
 ```
+Pyramid Dependencies:
+- vocab: (unlocked)
+- read: requires vocab (100 XP)
+- listen: requires read (100 XP)
+- write: requires listen (100 XP)
+- speak: requires write (100 XP)
+```
+
+Query each skill's XP from `skills_progress` and determine which are unlocked/blocked.
 
 ### Step 3: Determine Next Steps
 

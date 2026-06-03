@@ -11,8 +11,10 @@ Display ASCII pyramid, streak info, words learned, and vicios history.
 ### Step 1: Load User Data
 
 1. Read `configs/profile.yml` for streak and level
-2. Initialize DB from `src/db/__init__.py`
-3. Query skills_progress for all skills
+2. Query skills_progress for all skills via sqlite3:
+   ```bash
+   sqlite3 data/progress.db "SELECT skill_name, xp, session_count, last_practiced FROM skills_progress;"
+   ```
 
 ### Step 2: Build ASCII Pyramid
 
@@ -43,8 +45,8 @@ Last active: {last_active_date}
 ### Step 4: Show Vocabulary Stats
 
 Query SQLite for vocab stats:
-```sql
-SELECT status, COUNT(*) as count FROM vocab GROUP BY status
+```bash
+sqlite3 data/progress.db "SELECT status, COUNT(*) as count FROM vocab GROUP BY status;"
 ```
 
 Display:
@@ -59,8 +61,8 @@ Display:
 ### Step 5: Show Skills Progress
 
 Query SQLite for skills_progress:
-```sql
-SELECT skill_name, xp, session_count, last_practiced FROM skills_progress
+```bash
+sqlite3 data/progress.db "SELECT skill_name, xp, session_count, last_practiced FROM skills_progress;"
 ```
 
 Display for each skill:
@@ -74,12 +76,8 @@ Display for each skill:
 ### Step 5b: Show Listen Level
 
 Query SQLite for listen level progress:
-```sql
-SELECT listen_level, COUNT(*) as sessions, AVG(comprehension_rating) as avg_rating 
-FROM listening_progress 
-GROUP BY listen_level 
-ORDER BY MAX(session_date) DESC
-LIMIT 1
+```bash
+sqlite3 data/progress.db "SELECT listen_level, COUNT(*) as sessions, AVG(comprehension_rating) as avg_rating FROM listening_progress GROUP BY listen_level ORDER BY MAX(session_date) DESC LIMIT 1;"
 ```
 
 Display:
@@ -93,19 +91,9 @@ Display:
 ### Step 5d: Show Vocab Level Progress
 
 Query:
-```sql
-SELECT vocab_level, COUNT(*) as total,
-       SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as integradas
-FROM vocab 
-WHERE technical = 0
-GROUP BY vocab_level
-```
-
-```sql
-SELECT COUNT(*) as technical_count,
-       SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as technical_integradas
-FROM vocab 
-WHERE technical = 1
+```bash
+sqlite3 data/progress.db "SELECT vocab_level, COUNT(*) as total, SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as integradas FROM vocab WHERE technical = 0 GROUP BY vocab_level;"
+sqlite3 data/progress.db "SELECT COUNT(*) as technical_count, SUM(CASE WHEN repetition_count >= 100 THEN 1 ELSE 0 END) as technical_integradas FROM vocab WHERE technical = 1;"
 ```
 
 Display:
@@ -124,8 +112,8 @@ Status: Nivel 1: {"✅ Ready for level 2" if >=90% or "In progress"}
 ### Step 6: Show Vicios History
 
 Query SQLite for vicios patterns:
-```sql
-SELECT pattern, COUNT(*) as count FROM vicios_detected GROUP BY pattern ORDER BY count DESC LIMIT 5
+```bash
+sqlite3 data/progress.db "SELECT pattern, COUNT(*) as count FROM vicios_history GROUP BY pattern ORDER BY count DESC LIMIT 5;"
 ```
 
 Display top detected vicios:

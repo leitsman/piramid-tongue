@@ -33,8 +33,11 @@ Vocabulary practice with 3 progressive levels, SM-2 spaced repetition, and Anki-
 
 **SKILL: Load `skills/_shared/micro-test.md` before starting.**
 
-1. Import MICRO_TESTS from `src/test_questions.py`
-2. Check if vocab skill has < 100 XP in `skills_progress` table
+1. Read `src/test_questions.py` y extrae `MICRO_TESTS["vocab"][cefr_level]`
+2. Check if vocab skill has < 100 XP in `skills_progress` table:
+   ```bash
+   sqlite3 data/progress.db "SELECT xp FROM skills_progress WHERE skill_name = 'vocab';"
+   ```
 3. If (vocab_xp < 100) OR (user says "test me"):
    a. Select 4 random questions from MICRO_TESTS["vocab"][cefr_level]
    b. Present one by one, wait for answer (A/B/C/D)
@@ -62,15 +65,21 @@ Vocabulary practice with 3 progressive levels, SM-2 spaced repetition, and Anki-
      - If correct: SM-2 update (rating 3-5)
      - If wrong: Show correct answer, SM-2 reset (rating 1-2)
 
-3. Apply SM-2 formula from `src/core/spaced_repetition.py`:
+3. Apply SM-2 formula directly:
    ```
-   If rating < 3: interval = 1, ease_factor -= 0.2
-   If rating >= 3: interval = interval * ease_factor, ease_factor += 0.1
+   SM-2 Algorithm:
+   - Initial ease_factor: 2.5
+   - If rating < 3: interval = 1, ease_factor -= 0.2, status = 'learning'
+   - If rating >= 3:
+     - If repetition_count = 0: interval = 1
+     - If repetition_count = 1: interval = 6
+     - Else: interval = interval * ease_factor
+     - ease_factor += (0.1 - (5 - rating) * (0.08 + (5 - rating) * 0.02))
    ```
 
-4. Update `vocab` table with new interval and ease_factor:
-   ```sql
-   UPDATE vocab SET interval = ?, ease_factor = ?, last_review = datetime('now'), status = 'learning' WHERE id = ?
+4. Update `vocab` table with new interval and ease_factor using sqlite3:
+   ```bash
+   sqlite3 data/progress.db "UPDATE vocab SET interval = ${new_interval}, ease_factor = ${new_ease_factor}, last_review = datetime('now'), status = 'learning' WHERE id = ${word_id};"
    ```
 
 ### Step 4: New Words (if user wants)
@@ -79,10 +88,9 @@ Vocabulary practice with 3 progressive levels, SM-2 spaced repetition, and Anki-
 2. **Source A — User provides words:**
    - User pastes or types words with definitions
    - AI adds to database:
-     ```sql
-     INSERT INTO vocab (word, definition, example, vocab_level, ceFR_level, status)
-     VALUES (?, ?, ?, {auto_level}, ?, 'new')
-     ```
+    ```bash
+    sqlite3 data/progress.db "INSERT INTO vocab (word, definition, example, vocab_level, ceFR_level, status) VALUES ('${word}', '${definition}', '${example}', ${auto_level}, '${cefr_level}', 'new');"
+    ```
    - Auto-assign level:
      - Count words in nivel 1: `SELECT COUNT(*) FROM vocab WHERE vocab_level = 1 AND technical = 0`
      - Count words in nivel 2: `SELECT COUNT(*) FROM vocab WHERE vocab_level = 2 AND technical = 0`
@@ -136,14 +144,13 @@ Nivel 3 (Technical): {integrated}/{total} words integrated → {pct}%
    ```
 
 2. Insert into `sessions` table:
-   ```sql
-   INSERT INTO sessions (date, skill, duration_minutes, xp_earned, words_reviewed, new_words, notes)
-   VALUES (datetime('now'), 'vocab', ?, ?, ?, ?, ?)
+   ```bash
+   sqlite3 data/progress.db "INSERT INTO sessions (skill_name, duration_seconds, date, self_rating, notes) VALUES ('vocab', ${duration_min}, datetime('now'), ${rating}, '${notes}');"
    ```
 
 3. Update `skills_progress`:
-   ```sql
-   UPDATE skills_progress SET xp = xp + ?, session_count = session_count + 1 WHERE skill_name = 'vocab'
+   ```bash
+   sqlite3 data/progress.db "UPDATE skills_progress SET xp = xp + ${xp_earned}, session_count = session_count + 1 WHERE skill_name = 'vocab';"
    ```
 
 4. Update streak in `configs/profile.yml` if this is the first session of the day:
@@ -153,13 +160,11 @@ Nivel 3 (Technical): {integrated}/{total} words integrated → {pct}%
 
 ## SM-2 Algorithm Reference
 
-From `src/core/spaced_repetition.py`:
-
 ```
 EF' = EF + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
 where q = quality of response (0-5)
 
-If q < 3: repetitions = 0, interval = 1
+If q < 3: repetitions = 0, interval = 1, EF -= 0.2
 If q >= 3:
   - If repetitions = 0: interval = 1
   - If repetitions = 1: interval = 6

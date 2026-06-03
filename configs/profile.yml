@@ -5,9 +5,9 @@ level: B1
 objectives:
   - technical  # Inglés para trabajo/tech
 streak:
-  current: 0
-  longest: 0
-  last_active: null
+  current: 1
+  longest: 1
+  last_active: "2026-05-21"
 platforms:
   - name: "YouTalk"
     enabled: true

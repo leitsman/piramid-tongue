@@ -23,35 +23,8 @@ piramid-tongue/
 │   ├── progress.md            # ASCII pyramid + stats + streak
 │   ├── roadmap.md             # Next steps with dependencies
 │   └── vicios.md             # Vice pattern analysis
-├── src/                       # Backend modules (not executed by AI directly)
-│   ├── core/                  # Core engine and utilities
-│   │   ├── __init__.py
-│   │   ├── pyramid_engine.py  # Skill dependencies and flow (ASCENSO/DESCENSO)
-│   │   ├── spaced_repetition.py # SM-2 algorithm for vocabulary
-│   │   ├── leitner.py        # Leitner box system for weakness tracking
-│   │   ├── progress_tracker.py # Stats computation and persistence
-│   │   ├── cefr_detector.py  # CEFR level inference
-│   │   └── config.py         # YAML config loading
-│   ├── db/                    # SQLite persistence layer
-│   │   ├── __init__.py       # DB class + CRUD helpers
-│   │   └── schema.sql        # Table definitions
-│   ├── analysis/              # Text processing
-│   │   ├── __init__.py
-│   │   └── structural.py     # Rule-based writing analysis (vicios, issues)
-│   ├── platforms/             # External platform integration
-│   │   ├── __init__.py
-│   │   ├── platform_registry.py # Platform definitions and onboarding
-│   │   └── gap_detector.py    # Platform-vs-skill gap detection
-│   ├── logs/                  # Logging utilities
-│   │   ├── __init__.py
-│   │   └── writer.py         # LogWriter class (optional utility)
-│   ├── scrapers/              # Content connectors (defined but not skill-integrated)
-│   │   ├── __init__.py
-│   │   ├── bbc.py            # BBC Learning English scraper
-│   │   ├── youtube.py        # YouTube transcript extraction (yt-dlp)
-│   │   ├── books.py          # Gutenberg/Standard Ebooks fetcher
-│   │   └── web.py            # Generic web scraper with rate limiting
-│   └── test_questions.py      # Level test + micro-test question banks
+├── src/                       # Reference modules (not executed by AI)
+│   └── test_questions.py      # Level test + micro-test question banks (SHA256)
 ├── configs/                   # User configuration
 │   ├── profile.yml            # Identity, level, platforms, streak
 │   ├── platforms.yaml        # Platform definitions and metric schemas
@@ -94,21 +67,20 @@ AI updates SQLite, writes logs, shows results
 
 Each skill file (`skills/<command>.md`) contains:
 - Step-by-step instructions for the AI to execute
-- When to query the database
+- When to query the database via `sqlite3` bash commands
 - What to log and where
 - How to present results to the user
 
-The AI follows these instructions like a recipe. The `src/` directory provides helper modules the AI can import if needed, but the primary execution path is reading skill files and following their instructions.
+The AI follows these instructions like a recipe. The `src/` directory provides reference data (test questions, exercise templates) that the AI reads directly. All algorithms (SM-2, Leitner) are documented inline in the skill files.
 
 ### Backend Modules
 
-The `src/` directory contains Python modules that provide:
-- Database operations (`src/db/__init__.py`)
-- Algorithms (SM-2, Leitner, CEFR detection)
-- Analysis (structural writing analysis)
-- Configuration loading
+The `src/` directory contains only `src/test_questions.py` — a data file with:
+- `LEVEL_QUESTIONS`: Level test question banks with SHA256-hashed answers
+- `MICRO_TESTS`: Pre-session diagnostic questions for each skill
+- `EXERCISE_TEMPLATES`: Templates for generating adaptive practice exercises
 
-These are **helper libraries**, not execution endpoints. The AI uses them indirectly when implementing skill logic.
+This file is **read-only reference data**, not executable code. The AI reads it directly via the Read tool.
 
 ## 3. Data Flows
 
@@ -197,32 +169,32 @@ Box updates happen the day after practice (not immediately).
 - Major failure → drop 2 boxes (min 1)
 - Box 5 with 3+ consecutive correct → status = 'mastered'
 
-## 6. Structural Analysis (`src/analysis/structural.py`)
+## 6. Structural Analysis (AI-executed)
 
-Rule-based writing analysis without NLP libraries. Detects:
-- Article misuse (overuse of "the", missing "a/an")
+Rule-based writing analysis executed directly by the AI using regex patterns:
+- Article misuse (overuse of "the" >12% of tokens, missing "a/an")
 - Run-on sentences (> 3 conjunctions)
 - Sentence fragments (very short without proper subject)
 - Spanish interference (false friends: actually, sensible, embarrassed, etc.)
 - Verb tense inconsistency
 - Preposition errors (Spanish-influenced: depend of, think in, etc.)
 
-Each detected issue maps to an `error_type` and includes the specific `word` involved.
+Each detected issue maps to an `error_type` and includes the specific `word` involved. Patterns are applied by the AI directly — no Python module needed.
 
-## 7. Platform Tracking (`src/platforms/`)
+## 7. Platform Tracking (AI-executed)
 
 ### Platform Registry
 
-Defines platform structures and onboarding flows for:
+Defined in `configs/profile.yml` and `configs/platforms.yaml`:
 - YouTalk (Basic 1-15, Intermediate 16-30)
 - Duolingo (streak, league, weekly goal)
 
-### Gap Detection
+### Gap Detection (AI-executed)
 
-Compares platform progress against actual skill levels:
-- Platform suggests B1 level
-- But skill micro-tests show A2 in writing
-- → Gap detected: consume vs apply
+AI compares platform progress against actual skill levels:
+- Read platform's `platform_level_to_cefr` from profile.yml
+- Query actual skill XP from `skills_progress` table
+- If platform level > skill level → gap detected: consume vs apply
 
 ## 8. Vicios Detection
 
@@ -233,16 +205,13 @@ Configurable regex-based vice detection:
 
 ## 9. Tech Stack
 
-- **Python 3.11+**: Backend modules
-- **SQLite**: Persistence (via `src/db/__init__.py`)
-- **SM-2 + Leitner**: Spaced repetition algorithms
-- **Regex-based analysis**: Structural writing analysis
-- **pytest**: Testing
-- **No framework**: Pure Python utilities
+- **SQLite**: Persistence via `sqlite3` bash commands
+- **SM-2 + Leitner**: Algorithms executed directly by AI (documented in skills)
+- **Regex-based analysis**: Structural writing analysis done by AI directly
+- **No Python runtime**: All execution is AI-native
 
 ## 10. Future Work
 
-- [ ] Integrate scrapers (`src/scrapers/`) into skill flows
 - [ ] Voice input for speaking skill
 - [ ] Gamification (badges, leaderboard)
 - [ ] Plugin system for community-contributed skills
